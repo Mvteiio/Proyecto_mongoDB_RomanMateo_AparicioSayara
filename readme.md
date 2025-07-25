@@ -3,6 +3,9 @@
 
 Este proyecto consiste en el diseño, implementación y consulta de una base de datos NoSQL utilizando MongoDB para gestionar la información de un sistema hospitalario en Colombia. El sistema maneja entidades como hospitales, personal médico, pacientes, tratamientos, medicamentos y visitas médicas. Es un sistema que no es muy complejo, pero es necesario pensar de forma lógica para poder llevarlo a cabo.
 
+---
+
+
 ## Tabla de Contenidos
 1.  [Tecnologías Utilizadas](#tecnologías-utilizadas)
 2.  [Requisitos Previos](#requisitos-previos)
@@ -10,6 +13,19 @@ Este proyecto consiste en el diseño, implementación y consulta de una base de 
 4.  [Estructura de la Base de Datos](#estructura-de-la-base-de-datos)
 5.  [Consultas a la Base de Datos](#consultas-a-la-base-de-datos)
 6.  [Autor](#autor)
+
+---
+
+## Introducción
+
+
+El Sistema Hospitalario MongoDB es una solución integral de base de datos NoSQL diseñada para gestionar de manera eficiente todas las operaciones relacionadas con la administración hospitalaria. Este sistema contempla la gestión de hospitales, pacientes, médicos, tratamientos, medicamentos, visitas médicas, historiales clínicos, áreas especializadas y personal administrativo.
+
+
+Una característica distintiva del sistema es su capacidad para mantener historiales médicos detallados que incluyen diagnósticos, tratamientos realizados y resultados obtenidos, proporcionando una vista integral del estado de salud de cada paciente a lo largo del tiempo. Esto es especialmente valioso para el seguimiento continuo de condiciones crónicas y la coordinación entre diferentes especialidades médicas.
+
+
+El sistema también incorpora un robusto control de inventario de medicamentos, gestión de visitas médicas programadas y no programadas, así como un sistema de roles y permisos que garantiza que cada tipo de usuario tenga acceso únicamente a la información necesaria para desempeñar sus funciones.
 
 ---
 
@@ -49,6 +65,59 @@ Sigue estos pasos para poner en funcionamiento el proyecto en tu entorno local:
     Esto creará y poblará todas las colecciones necesarias.
 
 ---
+## Caso de Estudio
+El Sistema Hospitalario gestiona una red de hospitales que ofrecen servicios médicos especializados a pacientes individuales y colectivos. 
+
+El sistema atiende diferentes tipos de usuarios: pacientes, médicos especialistas, enfermeras, personal administrativo y personal de mantenimiento.
+
+Los hospitales cuentan con áreas especializadas que ofrecen descuentos por tratamientos en volumen basados en convenios institucionales. Además, el sistema debe soportar múltiples direcciones por paciente, gestión de historiales médicos, representantes médicos especializados y un esquema de seguimiento de tratamientos.
+
+---
+
+### Objetivos principales:
+
+    • Gestión integral de pacientes y sus historiales médicos
+    • Administración de personal médico y administrativo
+    • Control de inventario de medicamentos y suministros
+    • Seguimiento de visitas médicas y diagnósticos
+    • Gestión de áreas especializadas por hospital
+    • Sistema de roles y permisos diferenciados
+
+
+### Planificación
+ La planificación se centró en recopilar los requisitos funcionales a través de análisis de procesos hospitalarios. Se identificaron entidades clave, reglas del negocio (como descuentos por convenios institucionales), y flujos de información médica. También se destacó la necesidad de permitir múltiples seguros médicos por paciente, seguimiento de tratamientos, y precios variables de medicamentos en el tiempo.
+
+
+
+
+## Modelo Conceptual
+
+    • Hospital: Establecimientos médicos con áreas especializadas
+    • Paciente: Personas que reciben atención médica
+    • Médico: Profesionales especializados en diferentes áreas
+    • Personal: Empleados con diferentes roles y responsabilidades
+    • Área Especializada: Departamentos médicos especializados
+    • Visita Médica: Consultas y atenciones médicas
+    • Tratamiento: Procedimientos y terapias médicas
+    • Medicamento: Fármacos y suministros médicos
+    • Historial Médico: Registro histórico de atenciones
+
+---
+
+### Relaciones Claves
+
+    • Un hospital puede tener múltiples áreas especializadas
+    • Un director general puede supervisar varios hospitales
+    • Un paciente puede tener múltiples visitas médicas
+    • Un médico puede atender a múltiples pacientes
+    • Un tratamiento puede requerir múltiples medicamentos
+    • Un paciente puede tener múltiples seguros médicos
+    • Una visita médica genera entradas en el historial médico
+
+---
+
+## Gráfica
+
 
 ## Estructura de la Base de Datos
 El sistema utiliza un **modelo de datos híbrido**. Las entidades principales como `personal`, `pacientes` y `hospitales` están en colecciones separadas (normalizadas) para garantizar la integridad y escalabilidad. La información fuertemente acoplada, como el `historial` de un paciente, se mantiene incrustada (desnormalizada) para optimizar las lecturas.
