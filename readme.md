@@ -1,5 +1,38 @@
 
-# Proyecto: Sistema de Gestión Hospitalaria con MongoDB
+<div align="center">
+
+## Proyecto MongoDB
+
+<br><br><br>
+**Sistema Hospitalario**
+
+<br><br><br>
+
+**Sayara Aparicio**
+
+**Mateo Román**
+
+<br><br><br><br><br><br>
+
+**S1**
+
+**Pedro Felipe Gómez Bonilla**
+
+<br><br><br><br><br><br>
+
+**CAMPUSLANDS**
+
+**RUTA NODE JS**
+
+**BUCARAMANGA, SANTANDER**
+
+**2025**
+
+</div>
+
+---
+
+## Proyecto - Sistema de Gestión Hospitalaria con MongoDB
 
 Este proyecto consiste en el diseño, implementación y consulta de una base de datos NoSQL utilizando MongoDB para gestionar la información de un sistema hospitalario en Colombia. El sistema maneja entidades como hospitales, personal médico, pacientes, tratamientos, medicamentos y visitas médicas. Es un sistema que no es muy complejo, pero es necesario pensar de forma lógica para poder llevarlo a cabo.
 
@@ -7,12 +40,15 @@ Este proyecto consiste en el diseño, implementación y consulta de una base de 
 
 
 ## Tabla de Contenidos
-1.  [Tecnologías Utilizadas](#tecnologías-utilizadas)
-2.  [Requisitos Previos](#requisitos-previos)
-3.  [Instalación y Puesta en Marcha](#instalación-y-puesta-en-marcha)
-4.  [Estructura de la Base de Datos](#estructura-de-la-base-de-datos)
-5.  [Consultas a la Base de Datos](#consultas-a-la-base-de-datos)
-6.  [Autor](#autor)
+
+1.  [Introducción](#introducción)
+2.  [Tecnologías Utilizadas](#tecnologías-utilizadas)
+3.  [Requisitos Previos](#requisitos-previos)
+4.  [Instalación y Puesta en Marcha](#instalación-y-puesta-en-marcha)
+5.  [Caso de Estudio](#caso-de-estudio)
+6.  [Estructura de la Base de Datos](#estructura-de-la-base-de-datos)
+7.  [Consultas a la Base de Datos](#consultas-a-la-base-de-datos)
+8.  [Autor](#autor)
 
 ---
 
@@ -787,6 +823,6 @@ db.pacientes.aggregate([
 
 ## En proceso...
 
-# Autor
+# Desarrollado por
 - Mateo Román Camargo - [Linkedin](https://www.linkedin.com/in/mateo-roman-dev/) - [GitHub](https://github.com/Mvteiio) 
-- Sayara Aparicio [GitHub](https://github.com/SayaraAparicio/)
+- Sayara Aparicio - [LinkedIn](https://www.linkedin.com/in/sayara-aparicio-38827b373/) - [GitHub](https://github.com/SayaraAparicio/)
