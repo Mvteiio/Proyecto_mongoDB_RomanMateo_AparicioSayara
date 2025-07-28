@@ -821,6 +821,271 @@ db.pacientes.aggregate([
 ]);
 ```
 
+### Consulta 41: Médicos que Atendieron Casos de Leucemia
+Filtra la colección de personal buscando un rol específico que no habíamos buscado antes.
+```javascript
+db.personal.find({ "rol.descripcion": "Personal Administrativo" });
+```
+
+### Consulta 42: Listar todos los tratamientos que no pertenecen al área de "Cardiología"
+Usa el operador $ne (not equal) para excluir una categoría.
+```javascript
+db.tratamientos.find({ areaMedica: { $ne: "Cardiología" } });
+```
+
+### Consulta 43: Encontrar pacientes con un prefijo telefónico específico.
+Útil para buscar usuarios por región o compañía telefónica, usando una expresión regular.
+```javascript
+db.pacientes.find({ telefono: { $regex: /^301/ } });
+```
+
+### Consulta 44: Contar cuántos pacientes están afiliados a "Compensar".
+Un conteo directo y eficiente sobre un campo específico.
+```javascript
+db.pacientes.countDocuments({ seguro: "Compensar" });
+```
+
+### Consulta 45: Encontrar al director del hospital por su nombre (ignorando mayúsculas/minúsculas).
+Búsqueda flexible de texto con la opción 'i' para insensibilidad a mayúsculas.
+```javascript
+db.personal.findOne({
+  nombre: { $regex: /lucía fernández/i },
+  "rol.codigo": "001"
+});
+```
+
+### Consulta 46: Listar todos los medicamentos cuyo tipo de administración sea "Inyección".
+Filtra el catálogo de medicamentos por su forma de administración.
+```javascript
+db.medicamentos.find({ tipo: "Inyección" });
+```
+
+### Consulta 47: Listar los hospitales que ofrecen más de 3 especialidades.
+Usa el operador $expr para comparar campos dentro del mismo documento, en este caso, el tamaño del array 'especialidades'.
+```javascript
+db.hospitales.find({
+  $expr: { $gt: [ { $size: "$especialidades" }, 3 ] }
+});
+```
+
+### Consulta 48: Encontrar todas las visitas médicas cuyo diagnóstico contenga la palabra "Control".
+Similar a otras búsquedas de texto, pero aplicada a las observaciones de una visita.
+```javascript
+db.visitasMedicas.find({ diagnostico: { $regex: /Control/i } });
+```
+
+### Consulta 49: Encontrar al personal que no tiene un hospital asignado.
+Útil para roles directivos o personal flotante. Busca documentos donde el campo **hospital_id** no existe.
+```javascript
+db.personal.find({ hospital_id: { $exists: false } });
+```
+
+### Consulta 50: Encontrar todos los tratamientos cuyo costo sea inferior a 100,000.
+Filtra por un umbral de bajo costo usando $lt (less than).
+```javascript
+db.tratamientos.find({ costo: { $lt: 100000 } });
+```
+
+### Consulta 51: Calcular el gasto total en salarios por cada hospital.
+Agrupa al personal por hospital y suma sus salarios para obtener el costo operativo de personal.
+```javascript
+db.personal.aggregate([
+  { $match: { hospital_id: { $exists: true } } },
+  {
+    $group: {
+      _id: "$hospital_id",
+      gastoTotalSalarios: { $sum: "$salario" }
+    }
+  },
+  {
+    $lookup: {
+      from: "hospitales",
+      localField: "_id",
+      foreignField: "_id",
+      as: "hospitalInfo"
+    }
+  },
+  { $unwind: "$hospitalInfo" },
+  {
+    $project: {
+      _id: 0,
+      hospital: "$hospitalInfo.nombre",
+      gastoTotalSalarios: 1
+    }
+  }
+]);
+```
+
+### Consulta 52: Encontrar el día de la semana con más visitas médicas.
+Extrae el día de la semana de la fecha, lo agrupa y cuenta para encontrar el día más concurrido.
+```javascript
+db.visitasMedicas.aggregate([
+  {
+    $project: {
+      diaDeLaSemana: { $dayOfWeek: "$fecha" }
+    }
+  },
+  {
+    $group: {
+      _id: "$diaDeLaSemana",
+      numeroDeVisitas: { $sum: 1 }
+    }
+  },
+  { $sort: { numeroDeVisitas: -1 } },
+  { $limit: 1 }
+]);
+```
+
+### Consulta 53: Calcular la antigüedad del historial de cada paciente.
+Para cada paciente, encuentra la fecha mínima y máxima en su historial y calcula la diferencia.
+```javascript
+db.pacientes.aggregate([
+  { $unwind: "$historial" },
+  {
+    $group: {
+      _id: "$_id",
+      nombre: { $first: "$nombre" },
+      primeraEntrada: { $min: "$historial.fecha" },
+      ultimaEntrada: { $max: "$historial.fecha" }
+    }
+  },
+  {
+    $project: {
+      nombre: 1,
+      duracionHistorialDias: {
+        $round: [
+          { $divide: [ { $subtract: ["$ultimaEntrada", "$primeraEntrada"] }, 1000 * 60 * 60 * 24 ] },
+          0
+        ]
+      }
+    }
+  }
+]);
+```
+
+### Consulta 54: Listar cada hospital junto con la información completa de su director.
+Realiza un $lookup desde hospitales hacia personal para traer los datos del director.
+```javascript
+db.hospitales.aggregate([
+  {
+    $lookup: {
+      from: "personal",
+      localField: "director_id",
+      foreignField: "_id",
+      as: "infoDirector"
+    }
+  },
+  { $unwind: { path: "$infoDirector", preserveNullAndEmptyArrays: true } },
+  {
+    $project: {
+      _id: 0,
+      nombreHospital: "$nombre",
+      ciudad: "$ciudad",
+      director: {
+        nombre: "$infoDirector.nombre",
+        correo: "$infoDirector.correo"
+      }
+    }
+  }
+]);
+```
+
+### Consulta 55: Contar cuántos tipos de medicamentos provee cada fabricante.
+Agrupa los medicamentos por fabricante y cuenta cuántos documentos (tipos de med) tiene cada uno.
+```javascript
+db.medicamentos.aggregate([
+  { $group: { _id: "$fabricante", numeroDeMedicamentos: { $sum: 1 } } },
+  { $sort: { numeroDeMedicamentos: -1 } }
+]);
+```
+
+### Consulta 56: Calcular el costo promedio de los tratamientos por cada área médica.
+Agrupa los tratamientos por área y calcula el costo promedio de los procedimientos en esa área.
+```javascript
+db.tratamientos.aggregate([
+  {
+    $group: {
+      _id: "$areaMedica",
+      costoPromedio: { $avg: "$costo" }
+    }
+  },
+  { $sort: { costoPromedio: -1 } }
+]);
+```
+
+### Consulta 57: Listar pacientes que han sido atendidos en ambos hospitales.
+Agrupa las visitas por paciente, añadiendo el ID de cada hospital a un set (para evitar duplicados), y luego filtra por aquellos cuyo set tiene un tamaño de 2.
+```javascript
+db.visitasMedicas.aggregate([
+  {
+    $group: {
+      _id: "$paciente_id",
+      hospitalesVisitados: { $addToSet: "$hospital_id" }
+    }
+  },
+  { $match: { $expr: { $eq: [ { $size: "$hospitalesVisitados" }, 2 ] } } },
+  {
+    $lookup: {
+      from: "pacientes",
+      localField: "_id",
+      foreignField: "_id",
+      as: "paciente"
+    }
+  },
+  { $unwind: "$paciente" },
+  { $project: { _id: 0, nombrePaciente: "$paciente.nombre" } }
+]);
+```
+
+### Consulta 58: Encontrar los medicamentos que están disponibles en más de un hospital.
+Filtra los medicamentos donde el tamaño del array de inventario es mayor que 1.
+```javascript
+db.medicamentos.aggregate([
+  { $match: { $expr: { $gt: [ { $size: "$inventario_por_hospital" }, 1 ] } } },
+  { $project: { _id: 0, nombre: 1, fabricante: 1 } }
+]);
+```
+
+### Consulta 59: Listar las áreas médicas ordenadas por el costo total de todos sus tratamientos.
+Agrupa por área médica, suma el costo de todos sus tratamientos y ordena de mayor a menor.
+```javascript
+db.tratamientos.aggregate([
+  {
+    $group: {
+      _id: "$areaMedica",
+      costoTotalAcumulado: { $sum: "$costo" }
+    }
+  },
+  { $sort: { costoTotalAcumulado: -1 } }
+]);
+```
+
+### Consulta 60: Calcular el ratio de médicos por enfermero(a) en el hospital del Valle.
+Una consulta avanzada que agrupa todo el personal de un hospital y calcula la proporción entre dos roles.
+```javascript
+const hospitalValleId = db.hospitales.findOne({ nombre: "Hospital Universitario del Valle" })._id;
+db.personal.aggregate([
+    { $match: { hospital_id: hospitalValleId, "rol.codigo": { $in: ["002", "003"] } } },
+    {
+        $group: {
+            _id: "$hospital_id",
+            totalMedicos: { $sum: { $cond: [{ $eq: ["$rol.codigo", "002"] }, 1, 0] } },
+            totalEnfermeros: { $sum: { $cond: [{ $eq: ["$rol.codigo", "003"] }, 1, 0] } }
+        }
+    },
+    {
+        $project: {
+            _id: 0,
+            ratioMedicosPorEnfermero: {
+                $round: [{ $divide: ["$totalMedicos", { $max: ["$totalEnfermeros", 1] }] }, 2]
+            }
+        }
+    }
+]);
+```
+
+
+
 ## En proceso...
 
 # Desarrollado por
