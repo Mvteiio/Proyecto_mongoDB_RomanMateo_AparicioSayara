@@ -154,6 +154,162 @@ Los hospitales cuentan con áreas especializadas que ofrecen descuentos por trat
 
 ## Gráfica
 
+```mermaid
+---
+config:
+  theme: redux
+---
+flowchart TD
+%% Entidades
+
+    HOSPITAL["Hospital"]
+    style HOSPITAL fill:#BBDEFB
+    PACIENTES["Pacientes"]
+    style PACIENTES fill:#BBDEFB
+    PERSONAL["Personal"]
+    style PERSONAL fill:#BBDEFB
+    MEDICAMENTOS["Medicamentos"]
+    style MEDICAMENTOS fill:#BBDEFB
+    TRATAMIENTOS["Tratamientos"]
+    style TRATAMIENTOS fill:#BBDEFB
+    VISITASMEDICAS["Visitas_Medicas"]
+    style VISITASMEDICAS     fill:#BBDEFB
+
+    %% Atributos
+    HId((Id_Hospital))
+    HNombre((Nombre))
+    HCiudad((Ciudad))
+    HEspecialidades((Areas_Especializadas))
+    HEspecializacion1((0))
+    HEspecializacion2((1))
+    HEspecializacion3((2))
+    HIdDirector((Id_Director))
+
+    PId((Id_Pacientes))
+    PNum((Numero_Historia_Clinica))
+    PNom((Nombre))
+    PCiudad((Ciudad))
+    PDir((Direccion))
+    PTel((Telefono))
+    PSeguro((Seguro))
+    PHistorial((Historial))
+    PHiFecha((Fecha))
+    PHiDiag((Diagnostico))
+    PHiTra((Id_tratamiento))
+    PiRes((Resultados))
+
+    PeId((Id_Personal))
+    PeNom((Nombre))
+    PeNum((Numero_Colegiatura))
+    PeEspecialidad((Especialidad))
+    PeTel((Telefono))
+    PeCorreo((Correo))
+    PeSal((Salario))
+    PeHos((Id_Hospital))
+    PeRol((Rol))
+    PeRC((Codigo))
+    PeRD((Descripcion))
+
+    MId((Id_Medicamentos))
+    MNom((Nombre))
+    MFab((Fabricante))
+    MTipo((Tipo))
+    MInventario((Inventario))
+    MIn0((0))
+    MIn0ID((Id_Hospital))
+    MIn0Dis((Disponibilidad))
+    MIn1((1))
+    MIn1ID((Id_Hospital))
+    MIn1Dis((Disponibilidad))
+
+    TId((Id_Tratamientos))
+    TNom((Nombre))
+    TDes((Descripcion))
+    TArea((Area_Medica))
+    TCosto((Costo))
+
+    VMId((Id_VM))
+    VMFecha((Fecha))
+    VMP((Id_Paciente))
+    VMM((Id_Medico))
+    VMH((Id_Hospital))
+    VMDiag((Diagnostico))
+    VMObs((Observaciones))
+
+    %% Relaciones
+    HOSPITAL --> HId
+    HOSPITAL --> HNombre
+    HOSPITAL --> HCiudad
+    HOSPITAL --> HEspecialidades
+    HEspecialidades --> HEspecializacion1    
+    HEspecialidades --> HEspecializacion2
+    HEspecialidades --> HEspecializacion3
+    HOSPITAL --> HIdDirector
+
+    PACIENTES --> PId
+    PACIENTES --> PNum
+    PACIENTES --> PNom
+    PACIENTES --> PCiudad
+    PACIENTES --> PDir
+    PACIENTES --> PTel
+    PACIENTES --> PSeguro
+    PACIENTES --> PHistorial
+    PHistorial --> PHiFecha
+    PHistorial --> PHiDiag
+    PHistorial --> PHiTra
+    PHistorial --> PiRes
+
+    PERSONAL --> PeId
+    PERSONAL --> PeNom
+    PERSONAL --> PeNum
+    PERSONAL --> PeEspecialidad
+    PERSONAL --> PeTel
+    PERSONAL --> PeCorreo
+    PERSONAL --> PeSal
+    PERSONAL --> PeHos
+    PERSONAL --> PeRol
+    PeRol --> PeRC
+    PeRol --> PeRD
+
+    MEDICAMENTOS --> MId
+    MEDICAMENTOS --> MNom
+    MEDICAMENTOS --> MFab
+    MEDICAMENTOS --> MTipo
+    MEDICAMENTOS --> MInventario
+    MInventario --> MIn0
+    MIn0 --> MIn0ID
+    MIn0 --> MIn0Dis
+    MInventario --> MIn1
+    MIn1 --> MIn1ID
+    MIn1 --> MIn1Dis
+
+    TRATAMIENTOS --> TId
+    TRATAMIENTOS --> TNom
+    TRATAMIENTOS --> TDes
+    TRATAMIENTOS --> TArea
+    TRATAMIENTOS --> TCosto
+
+    VISITASMEDICAS --> VMId
+    VISITASMEDICAS --> VMFecha
+    VISITASMEDICAS --> VMP
+    VISITASMEDICAS --> VMM
+    VISITASMEDICAS --> VMH
+    VISITASMEDICAS --> VMDiag
+    VISITASMEDICAS --> VMObs
+
+    HOSPITAL --> PERSONAL
+    PACIENTES --> VISITASMEDICAS
+    PERSONAL --> VISITASMEDICAS
+
+
+
+
+
+
+
+
+```
+
 
 ## Estructura de la Base de Datos
 El sistema utiliza un **modelo de datos híbrido**. Las entidades principales como `personal`, `pacientes` y `hospitales` están en colecciones separadas (normalizadas) para garantizar la integridad y escalabilidad. La información fuertemente acoplada, como el `historial` de un paciente, se mantiene incrustada (desnormalizada) para optimizar las lecturas.
