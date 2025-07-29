@@ -1,10 +1,14 @@
 // Funciones JavaScript (UDF - Simuladas) para MongoDB
 
 // 1. Función para calcular el inventario total de medicamentos por hospital
-function calcularInventarioTotalPorHospital(hospitalId) {
+function calcularInventarioTotalPorHospital(hospitalIdString) {
+  
+  const hospitalObjectId = new ObjectId(hospitalIdString);
+
   return db.medicamentos.aggregate([
     { $unwind: "$inventario_por_hospital" },
-    { $match: { "inventario_por_hospital.hospital_id": hospitalId } },
+    
+    { $match: { "inventario_por_hospital.hospital_id": hospitalObjectId } },
     { 
       $group: {
         _id: null,
@@ -15,7 +19,7 @@ function calcularInventarioTotalPorHospital(hospitalId) {
     { 
       $project: {
         _id: 0,
-        hospital: hospitalId,
+        hospital: hospitalObjectId,
         totalMedicamentos: 1,
         cantidadTipos: 1
       }
@@ -39,33 +43,55 @@ function generarReporteVisitasPorDiagnostico(fechaInicio, fechaFin) {
       $group: { 
         _id: "$diagnostico", 
         totalVisitas: { $sum: 1 },
-        primeros10Pacientes: { $push: { $slice: ["$paciente_id", 10] } }
+        pacientes: { $addToSet: "$paciente_id" }
       } 
     },
     { $sort: { totalVisitas: -1 } },
-    { $limit: 20 }
+    { $limit: 20 },
+    {
+      $project: {
+        _id: 0,
+        diagnostico: "$_id",
+        totalVisitas: 1,
+        primeros10Pacientes: { $slice: ["$pacientes", 10] }
+      }
+    }
   ]).toArray();
 }
 
 // 3. Función para obtener estadísticas de tratamientos por hospital
 
 function obtenerEstadisticasTratamientosPorHospital() {
-  return db.visitasMedicas.aggregate([
+  return db.pacientes.aggregate([
+    { $unwind: "$historial" },
+    
     {
       $lookup: {
         from: "tratamientos",
-        localField: "tratamiento_id",
+        localField: "historial.tratamiento_id",
         foreignField: "_id",
-        as: "tratamiento"
+        as: "infoTratamiento"
       }
     },
-    { $unwind: "$tratamiento" },
+    { $unwind: "$infoTratamiento" },
+
+
+    {
+      $lookup: {
+        from: "visitasMedicas",
+        localField: "_id", // El _id del paciente
+        foreignField: "paciente_id",
+        as: "visitas"
+      }
+    },
+    { $unwind: "$visitas" },
+
     {
       $group: {
-        _id: "$hospital_id",
+        _id: "$visitas.hospital_id",
         totalTratamientos: { $sum: 1 },
-        costoPromedio: { $avg: "$tratamiento.costo" },
-        costoTotal: { $sum: "$tratamiento.costo" }
+        costoPromedio: { $avg: "$infoTratamiento.costo" },
+        costoTotal: { $sum: "$infoTratamiento.costo" }
       }
     },
     {
@@ -81,16 +107,17 @@ function obtenerEstadisticasTratamientosPorHospital() {
       $project: {
         _id: 0,
         nombreHospital: "$hospital.nombre",
-        totalTratamientos: 1,
-        costoPromedio: { $round: ["$costoPromedio", 2] },
-        costoTotal: 1
+        totalTratamientosAplicados: "$totalTratamientos",
+        costoPromedioPorTratamiento: { $round: ["$costoPromedio", 2] },
+        costoTotalAcumulado: "$costoTotal"
       }
-    }
+    },
+    { $sort: { costoTotalAcumulado: -1 } }
   ]).toArray();
 }
 
 // 4. Función para calcular la ocupación de médicos (visitas por médico)
-javascript
+
 function calcularOcupacionMedicos(fechaInicio, fechaFin) {
   return db.visitasMedicas.aggregate([
     { 
@@ -147,11 +174,11 @@ function encontrarPacientesConTratamientosCostosos(umbralCosto) {
       $group: {
         _id: "$_id",
         nombre: { $first: "$nombre" },
-        totalGastado: { $sum: "$tratamiento.costo" },
+        totalGastadoEnTratamientosCaros: { $sum: "$tratamiento.costo" },
         tratamientosCostosos: { $push: "$tratamiento.nombre" }
       }
     },
-    { $sort: { totalGastado: -1 } }
+    { $sort: { totalGastadoEnTratamientosCaros: -1 } }
   ]).toArray();
 }
 // 6. Función para generar reporte de medicamentos por debajo del stock mínimo
@@ -190,11 +217,13 @@ function calcularPromedioVisitasPorPaciente() {
         totalVisitas: { $sum: 1 } 
       } 
     },
+    { $sort: { totalVisitas: -1 } },
+
     { 
       $group: { 
         _id: null, 
         promedioVisitas: { $avg: "$totalVisitas" },
-        pacientesConMasVisitas: { 
+        pacientesOrdenados: { 
           $push: { 
             paciente_id: "$_id", 
             visitas: "$totalVisitas" 
@@ -205,8 +234,8 @@ function calcularPromedioVisitasPorPaciente() {
     { 
       $project: { 
         _id: 0, 
-        promedioVisitas: { $round: ["$promedioVisitas", 2] },
-        topPacientes: { $slice: ["$pacientesConMasVisitas", 5] }
+        promedioVisitasGeneral: { $round: ["$promedioVisitas", 2] },
+        top5Pacientes: { $slice: ["$pacientesOrdenados", 5] }
       } 
     }
   ]).toArray();
@@ -250,6 +279,7 @@ function calcularDistribucionPacientesPorEPSYCiudad() {
         as: "visitas"
       }
     },
+    { $match: { "visitas.0": { $exists: true } } }, 
     { $unwind: "$visitas" },
     {
       $lookup: {
@@ -266,7 +296,7 @@ function calcularDistribucionPacientesPorEPSYCiudad() {
           eps: "$seguro",
           ciudad: "$hospital.ciudad"
         },
-        totalPacientes: { $sum: 1 }
+        pacientesUnicos: { $addToSet: "$_id" }
       }
     },
     {
@@ -274,35 +304,49 @@ function calcularDistribucionPacientesPorEPSYCiudad() {
         _id: 0,
         eps: "$_id.eps",
         ciudad: "$_id.ciudad",
-        totalPacientes: 1
+        totalPacientes: { $size: "$pacientesUnicos" }
       }
     },
-    { $sort: { totalPacientes: -1 } }
+    { $sort: { ciudad: 1, totalPacientes: -1 } }
   ]).toArray();
 }
 
 // 10. Función para generar reporte de tratamientos más comunes por especialidad
 
 function generarReporteTratamientosComunesPorEspecialidad() {
-  return db.visitasMedicas.aggregate([
+  return db.pacientes.aggregate([
+    { $unwind: "$historial" },
+    
+    {
+      $lookup: {
+        from: "visitasMedicas",
+        localField: "_id",
+        foreignField: "paciente_id",
+        as: "visita"
+      }
+    },
+    { $unwind: "$visita" },
+    
     {
       $lookup: {
         from: "personal",
-        localField: "medico_id",
+        localField: "visita.medico_id",
         foreignField: "_id",
         as: "medico"
       }
     },
     { $unwind: "$medico" },
+
     {
-      $lookup: {
-        from: "tratamientos",
-        localField: "tratamiento_id",
-        foreignField: "_id",
-        as: "tratamiento"
-      }
+        $lookup: {
+            from: "tratamientos",
+            localField: "historial.tratamiento_id",
+            foreignField: "_id",
+            as: "tratamiento"
+        }
     },
     { $unwind: "$tratamiento" },
+
     {
       $group: {
         _id: {
@@ -328,9 +372,10 @@ function generarReporteTratamientosComunesPorEspecialidad() {
       $project: {
         _id: 0,
         especialidad: "$_id",
-        tratamientos: { $slice: ["$tratamientos", 5] }
+        top5Tratamientos: { $slice: ["$tratamientos", 5] } 
       }
-    }
+    },
+    { $sort: { especialidad: 1 } }
   ]).toArray();
 }
 
@@ -396,10 +441,15 @@ function calcularTiempoPromedioEntreVisitas() {
         fechas: { $push: "$fecha" }
       }
     },
+    { 
+      $match: { 
+        "fechas.1": { $exists: true } 
+      } 
+    },
     {
       $project: {
-        _id: 0,
         paciente_id: "$_id",
+        fechas: 1,
         diferencias: {
           $map: {
             input: { $range: [1, { $size: "$fechas" }] },
@@ -410,13 +460,14 @@ function calcularTiempoPromedioEntreVisitas() {
                   { $arrayElemAt: ["$fechas", "$$idx"] },
                   { $arrayElemAt: ["$fechas", { $subtract: ["$$idx", 1] }] }
                 ]},
-                1000 * 60 * 60 * 24 // Convertir a días
+                1000 * 60 * 60 * 24 
               ]
             }
           }
         }
       }
     },
+
     {
       $lookup: {
         from: "pacientes",
@@ -430,13 +481,12 @@ function calcularTiempoPromedioEntreVisitas() {
       $project: {
         _id: 0,
         nombrePaciente: "$paciente.nombre",
-        promedioDiasEntreVisitas: { $avg: "$diferencias" },
-        totalVisitas: { $size: "$diferencias" },
-        diferencias: 1
+        promedioDiasEntreVisitas: { $round: [{ $avg: "$diferencias" }, 2] },
+        totalVisitas: { $size: "$fechas" },
+        diferenciasEnDias: "$diferencias"
       }
     },
-    { $match: { totalVisitas: { $gt: 1 } } },
-    { $sort: { promedioDiasEntreVisitas: 1 } }
+    { $sort: { promedioDiasEntreVisitas: 1 } } 
   ]).toArray();
 }
 
@@ -517,166 +567,79 @@ function encontrarPacientesConTratamientosIncompletos() {
   ]).toArray();
 }
 
-// 16. Función para calcular la distribución de edades de pacientes
+// 16. Función para predecir necesidades de medicamentos
 
-function calcularDistribucionEdadesPacientes() {
-  // Suponiendo que tenemos un campo fechaNacimiento en los pacientes
-  return db.pacientes.aggregate([
-    {
-      $project: {
-        nombre: 1,
-        edad: {
-          $divide: [
-            { $subtract: [new Date(), "$fechaNacimiento"] },
-            1000 * 60 * 60 * 24 * 365.25 // Convertir a años
-          ]
-        }
-      }
-    },
-    {
-      $bucket: {
-        groupBy: "$edad",
-        boundaries: [0, 18, 30, 45, 60, 75, 90, 120],
-        default: "Desconocido",
-        output: {
-          count: { $sum: 1 },
-          pacientes: { $push: "$nombre" }
-        }
-      }
-    }
-  ]).toArray();
-}
+function generarReporteNivelDeStock(diasDeStockDeseados) {
 
-// 17. Función para predecir necesidades de medicamentos
+  const CONSUMO_DIARIO_ASUMIDO = 5;
 
-function predecirNecesidadesMedicamentos(diasProyeccion) {
-  return db.visitasMedicas.aggregate([
-    {
-      $lookup: {
-        from: "tratamientos",
-        localField: "tratamiento_id",
-        foreignField: "_id",
-        as: "tratamiento"
-      }
-    },
-    { $unwind: "$tratamiento" },
-    {
-      $lookup: {
-        from: "medicamentos",
-        localField: "tratamiento.medicamentos",
-        foreignField: "_id",
-        as: "medicamentos"
-      }
-    },
-    { $unwind: "$medicamentos" },
-    {
-      $group: {
-        _id: {
-          medicamento: "$medicamentos.nombre",
-          hospital: "$hospital_id"
-        },
-        usoDiarioPromedio: { $avg: "$medicamentos.dosisDiaria" },
-        totalUsos: { $sum: 1 }
-      }
-    },
+  return db.medicamentos.aggregate([
+    { $unwind: "$inventario_por_hospital" },
     {
       $lookup: {
         from: "hospitales",
-        localField: "_id.hospital",
+        localField: "inventario_por_hospital.hospital_id",
         foreignField: "_id",
         as: "hospital"
       }
     },
     { $unwind: "$hospital" },
     {
-      $lookup: {
-        from: "medicamentos",
-        localField: "_id.medicamento",
-        foreignField: "nombre",
-        as: "medicamentoInfo"
-      }
-    },
-    { $unwind: "$medicamentoInfo" },
-    { $unwind: "$medicamentoInfo.inventario_por_hospital" },
-    {
-      $match: {
-        "medicamentoInfo.inventario_por_hospital.hospital_id": "$_id.hospital"
-      }
-    },
-    {
       $project: {
         _id: 0,
-        medicamento: "$_id.medicamento",
+        medicamento: "$nombre",
         hospital: "$hospital.nombre",
-        stockActual: "$medicamentoInfo.inventario_por_hospital.disponibilidad",
-        usoDiarioPromedio: 1,
+        stockActual: "$inventario_por_hospital.disponibilidad",
         diasRestantes: {
-          $divide: [
-            "$medicamentoInfo.inventario_por_hospital.disponibilidad",
-            "$usoDiarioPromedio"
-          ]
-        },
-        necesarioReponer: {
-          $lt: [
-            {
-              $divide: [
-                "$medicamentoInfo.inventario_por_hospital.disponibilidad",
-                "$usoDiarioPromedio"
-              ]
-            },
-            diasProyeccion
-          ]
+          $round: [{ $divide: ["$inventario_por_hospital.disponibilidad", CONSUMO_DIARIO_ASUMIDO] }, 0]
         }
+      }
+    },
+    {
+      $match: {
+        diasRestantes: { $lt: diasDeStockDeseados }
       }
     },
     { $sort: { diasRestantes: 1 } }
   ]).toArray();
 }
 
-// 18. Función para generar reporte de ingresos por tratamiento
+// 17. Ingresos Totales Potenciales por Área Médica
 
-function generarReporteIngresosPorTratamiento(fechaInicio, fechaFin) {
-  return db.visitasMedicas.aggregate([
-    { 
-      $match: { 
-        fecha: { 
-          $gte: new Date(fechaInicio), 
-          $lte: new Date(fechaFin) 
-        } 
-      } 
-    },
+function reporteIngresosPotencialesPorArea() {
+  return db.pacientes.aggregate([
+    { $unwind: "$historial" },
+
     {
       $lookup: {
         from: "tratamientos",
-        localField: "tratamiento_id",
+        localField: "historial.tratamiento_id",
         foreignField: "_id",
         as: "tratamiento"
       }
     },
     { $unwind: "$tratamiento" },
+
     {
       $group: {
-        _id: "$tratamiento.nombre",
-        areaMedica: { $first: "$tratamiento.areaMedica" },
-        totalIngresos: { $sum: "$tratamiento.costo" },
-        totalVisitas: { $sum: 1 }
+        _id: "$tratamiento.areaMedica",
+        ingresosTotales: { $sum: "$tratamiento.costo" },
+        numeroDeTratamientos: { $sum: 1 }
       }
     },
     {
       $project: {
         _id: 0,
-        tratamiento: "$_id",
-        areaMedica: 1,
-        totalIngresos: 1,
-        totalVisitas: 1,
-        ingresoPromedio: { $divide: ["$totalIngresos", "$totalVisitas"] }
+        areaMedica: "$_id",
+        ingresosTotales: 1,
+        numeroDeTratamientos: 1
       }
     },
-    { $sort: { totalIngresos: -1 } }
+    { $sort: { ingresosTotales: -1 } }
   ]).toArray();
 }
 
-// 19. Función para encontrar correlaciones entre diagnósticos y tratamientos
+// 18. Función para encontrar correlaciones entre diagnósticos y tratamientos
 
 function encontrarCorrelacionesDiagnosticosTratamientos() {
   return db.pacientes.aggregate([
@@ -699,7 +662,10 @@ function encontrarCorrelacionesDiagnosticosTratamientos() {
         frecuencia: { $sum: 1 }
       }
     },
-    { $sort: { frecuencia: -1 } },
+
+    { $sort: { "_id.diagnostico": 1, "frecuencia": -1 } },
+
+
     {
       $group: {
         _id: "$_id.diagnostico",
@@ -715,12 +681,12 @@ function encontrarCorrelacionesDiagnosticosTratamientos() {
       $project: {
         _id: 0,
         diagnostico: "$_id",
-        tratamientosComunes: { $slice: ["$tratamientosComunes", 3] }
+        top3Tratamientos: { $slice: ["$tratamientosComunes", 3] }
       }
     }
   ]).toArray();
 }
-// 20. Función para generar reporte de desempeño hospitalario
+// 19. Función para generar reporte de desempeño hospitalario
 
 function generarReporteDesempenoHospitalario() {
   return db.hospitales.aggregate([
@@ -765,18 +731,29 @@ function generarReporteDesempenoHospitalario() {
           }
         },
         ratioVisitasPorMedico: {
-          $divide: [
-            { $size: "$visitas" },
-            {
-              $size: {
-                $filter: {
-                  input: "$personal",
-                  as: "empleado",
-                  cond: { $eq: ["$$empleado.rol.descripcion", "Médico Especialista"] }
-                }
-              }
-            }
-          ]
+          $cond: {
+            if: { $gt: [
+              { $size: {
+                  $filter: {
+                    input: "$personal",
+                    cond: { $eq: ["$$this.rol.descripcion", "Médico Especialista"] }
+                  }
+              }}, 0]
+            },
+            then: {
+              $round: [ 
+                { $divide: [
+                    { $size: "$visitas" },
+                    { $size: {
+                        $filter: {
+                          input: "$personal",
+                          cond: { $eq: ["$$this.rol.descripcion", "Médico Especialista"] }
+                        }
+                    }}
+                ]}, 2]
+            },
+            else: 0 
+          }
         }
       }
     },
@@ -784,16 +761,62 @@ function generarReporteDesempenoHospitalario() {
   ]).toArray();
 }
 
-// Para implementar en MongoDb, realizar el siguiente comando
-// Ejemplo de cómo guardarla
-db.system.js.save({
-  _id: "calcularInventarioTotalPorHospital",
-  value: function(hospitalId) {
-    return db.medicamentos.aggregate([
-      // Función...
-    ]).toArray();
-  }
-});
+// 20. Funcion para tener un Dashboard general
 
-// Para llamar a la función
-db.eval("calcularInventarioTotalPorHospital(ObjectId('...'))");
+function obtenerDashboardGeneral() {
+  return db.visitasMedicas.aggregate([
+    {
+      $facet: {
+        "resumenGeneral": [
+          {
+            $group: {
+              _id: null,
+              totalVisitas: { $sum: 1 },
+              pacientesUnicos: { $addToSet: "$paciente_id" }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              totalVisitas: 1,
+              totalPacientesAtendidos: { $size: "$pacientesUnicos" }
+            }
+          }
+        ],
+
+        "topDiagnosticos": [
+          { $group: { _id: "$diagnostico", frecuencia: { $sum: 1 } } },
+          { $sort: { frecuencia: -1 } },
+          { $limit: 5 }
+        ],
+
+
+        "rendimientoHospitales": [
+          { $group: { _id: "$hospital_id", totalVisitas: { $sum: 1 } } },
+          { $sort: { totalVisitas: -1 } },
+          {
+            $lookup: {
+              from: "hospitales",
+              localField: "_id",
+              foreignField: "_id",
+              as: "hospital"
+            }
+          },
+          { $unwind: "$hospital" },
+          { $project: { _id: 0, hospital: "$hospital.nombre", totalVisitas: 1 } }
+        ]
+      }
+    },
+
+    {
+      $project: {
+        totalVisitas: { $arrayElemAt: ["$resumenGeneral.totalVisitas", 0] },
+        totalPacientesAtendidos: { $arrayElemAt: ["$resumenGeneral.totalPacientesAtendidos", 0] },
+        topDiagnosticos: "$topDiagnosticos",
+        rendimientoHospitales: "$rendimientoHospitales"
+      }
+    }
+
+  ]).toArray();
+}
+
