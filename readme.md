@@ -820,31 +820,33 @@ db.pacientes.aggregate([
   }
 ]);
 ```
-
+---
 ### Consulta 41: Médicos que Atendieron Casos de Leucemia
 Filtra la colección de personal buscando un rol específico que no habíamos buscado antes.
 ```javascript
 db.personal.find({ "rol.descripcion": "Personal Administrativo" });
 ```
-
+---
 ### Consulta 42: Listar todos los tratamientos que no pertenecen al área de "Cardiología"
 Usa el operador $ne (not equal) para excluir una categoría.
 ```javascript
 db.tratamientos.find({ areaMedica: { $ne: "Cardiología" } });
 ```
 
+---
+
 ### Consulta 43: Encontrar pacientes con un prefijo telefónico específico.
 Útil para buscar usuarios por región o compañía telefónica, usando una expresión regular.
 ```javascript
 db.pacientes.find({ telefono: { $regex: /^301/ } });
 ```
-
+---
 ### Consulta 44: Contar cuántos pacientes están afiliados a "Compensar".
 Un conteo directo y eficiente sobre un campo específico.
 ```javascript
 db.pacientes.countDocuments({ seguro: "Compensar" });
 ```
-
+---
 ### Consulta 45: Encontrar al director del hospital por su nombre (ignorando mayúsculas/minúsculas).
 Búsqueda flexible de texto con la opción 'i' para insensibilidad a mayúsculas.
 ```javascript
@@ -853,12 +855,13 @@ db.personal.findOne({
   "rol.codigo": "001"
 });
 ```
-
+---
 ### Consulta 46: Listar todos los medicamentos cuyo tipo de administración sea "Inyección".
 Filtra el catálogo de medicamentos por su forma de administración.
 ```javascript
 db.medicamentos.find({ tipo: "Inyección" });
 ```
+---
 
 ### Consulta 47: Listar los hospitales que ofrecen más de 3 especialidades.
 Usa el operador $expr para comparar campos dentro del mismo documento, en este caso, el tamaño del array 'especialidades'.
@@ -867,25 +870,25 @@ db.hospitales.find({
   $expr: { $gt: [ { $size: "$especialidades" }, 3 ] }
 });
 ```
-
+---
 ### Consulta 48: Encontrar todas las visitas médicas cuyo diagnóstico contenga la palabra "Control".
 Similar a otras búsquedas de texto, pero aplicada a las observaciones de una visita.
 ```javascript
 db.visitasMedicas.find({ diagnostico: { $regex: /Control/i } });
 ```
-
+---
 ### Consulta 49: Encontrar al personal que no tiene un hospital asignado.
 Útil para roles directivos o personal flotante. Busca documentos donde el campo **hospital_id** no existe.
 ```javascript
 db.personal.find({ hospital_id: { $exists: false } });
 ```
-
+---
 ### Consulta 50: Encontrar todos los tratamientos cuyo costo sea inferior a 100,000.
 Filtra por un umbral de bajo costo usando $lt (less than).
 ```javascript
 db.tratamientos.find({ costo: { $lt: 100000 } });
 ```
-
+---
 ### Consulta 51: Calcular el gasto total en salarios por cada hospital.
 Agrupa al personal por hospital y suma sus salarios para obtener el costo operativo de personal.
 ```javascript
@@ -915,6 +918,7 @@ db.personal.aggregate([
   }
 ]);
 ```
+---
 
 ### Consulta 52: Encontrar el día de la semana con más visitas médicas.
 Extrae el día de la semana de la fecha, lo agrupa y cuenta para encontrar el día más concurrido.
@@ -935,7 +939,7 @@ db.visitasMedicas.aggregate([
   { $limit: 1 }
 ]);
 ```
-
+---
 ### Consulta 53: Calcular la antigüedad del historial de cada paciente.
 Para cada paciente, encuentra la fecha mínima y máxima en su historial y calcula la diferencia.
 ```javascript
@@ -962,7 +966,7 @@ db.pacientes.aggregate([
   }
 ]);
 ```
-
+---
 ### Consulta 54: Listar cada hospital junto con la información completa de su director.
 Realiza un $lookup desde hospitales hacia personal para traer los datos del director.
 ```javascript
@@ -989,7 +993,7 @@ db.hospitales.aggregate([
   }
 ]);
 ```
-
+---
 ### Consulta 55: Contar cuántos tipos de medicamentos provee cada fabricante.
 Agrupa los medicamentos por fabricante y cuenta cuántos documentos (tipos de med) tiene cada uno.
 ```javascript
@@ -998,7 +1002,7 @@ db.medicamentos.aggregate([
   { $sort: { numeroDeMedicamentos: -1 } }
 ]);
 ```
-
+---
 ### Consulta 56: Calcular el costo promedio de los tratamientos por cada área médica.
 Agrupa los tratamientos por área y calcula el costo promedio de los procedimientos en esa área.
 ```javascript
@@ -1012,7 +1016,7 @@ db.tratamientos.aggregate([
   { $sort: { costoPromedio: -1 } }
 ]);
 ```
-
+---
 ### Consulta 57: Listar pacientes que han sido atendidos en ambos hospitales.
 Agrupa las visitas por paciente, añadiendo el ID de cada hospital a un set (para evitar duplicados), y luego filtra por aquellos cuyo set tiene un tamaño de 2.
 ```javascript
@@ -1036,6 +1040,7 @@ db.visitasMedicas.aggregate([
   { $project: { _id: 0, nombrePaciente: "$paciente.nombre" } }
 ]);
 ```
+---
 
 ### Consulta 58: Encontrar los medicamentos que están disponibles en más de un hospital.
 Filtra los medicamentos donde el tamaño del array de inventario es mayor que 1.
@@ -1045,7 +1050,7 @@ db.medicamentos.aggregate([
   { $project: { _id: 0, nombre: 1, fabricante: 1 } }
 ]);
 ```
-
+---
 ### Consulta 59: Listar las áreas médicas ordenadas por el costo total de todos sus tratamientos.
 Agrupa por área médica, suma el costo de todos sus tratamientos y ordena de mayor a menor.
 ```javascript
@@ -1059,7 +1064,7 @@ db.tratamientos.aggregate([
   { $sort: { costoTotalAcumulado: -1 } }
 ]);
 ```
-
+---
 ### Consulta 60: Calcular el ratio de médicos por enfermero(a) en el hospital del Valle.
 Una consulta avanzada que agrupa todo el personal de un hospital y calcula la proporción entre dos roles.
 ```javascript
@@ -1083,23 +1088,25 @@ db.personal.aggregate([
     }
 ]);
 ```
+---
 ### Consulta 61: Encontrar pacientes cuyo nombre termina en "a"
 Usamos el símbolo '$' en la expresión regular para anclar la búsqueda al final del string.
 ```javascript
 db.pacientes.find({ nombre: { $regex: /a$/i } });
 ```
-
+---
 ### Consulta 62: Obtener una lista de todas las aseguradoras (EPS) únicas
 El método .distinct() es muy eficiente para obtener los valores únicos de un campo específico.
 ```javascript
 db.pacientes.distinct("seguro");
 ```
-
+---
 ### Consulta 63: Listar al personal con un correo electrónico del dominio "hsi.com"
 Búsqueda de texto para encontrar personal de un hospital específico a través de su correo.
 ```javascript
 db.personal.find({ correo: { $regex: /@hsi.com$/ } });
 ```
+---
 
 ### Consulta 64: Contar el número de enfermeros(as) en el "Hospital Universitario del Valle"
 Una consulta de conteo con múltiples condiciones para un resultado específico.
@@ -1110,7 +1117,7 @@ db.personal.countDocuments({
   "hospital_id": hospitalValleId
 });
 ```
-
+---
 ### Consulta 65: Encontrar tratamientos con un costo entre 100,000 y 1,000,000
 Define un rango de precios utilizando los operadores $gte (mayor o igual) y $lte (menor o igual).
 ```javascript
@@ -1118,7 +1125,7 @@ db.tratamientos.find({
   costo: { $gte: 100000, $lte: 1000000 }
 });
 ```
-
+---
 ### Consulta 66: Listar todas las visitas médicas que ocurrieron en la mañana (antes de las 12:00 UTC)
 Usamos $expr para poder utilizar operadores de agregación como $hour dentro de una consulta find.
 ```javascript
@@ -1126,6 +1133,7 @@ db.visitasMedicas.find({
   $expr: { $lt: [ { $hour: "$fecha" }, 12 ] }
 });
 ```
+---
 
 ### Consulta 67: Encontrar el paciente que ha recibido "Angioplastia Coronaria" en su historial
 Primero obtenemos el ID del tratamiento y luego lo usamos para buscar en los historiales.
@@ -1133,24 +1141,25 @@ Primero obtenemos el ID del tratamiento y luego lo usamos para buscar en los his
 const tratamientoId = db.tratamientos.findOne({ nombre: "Angioplastia Coronaria" })._id;
 db.pacientes.findOne({ "historial.tratamiento_id": tratamientoId });
 ```
-
+---
 ### Consulta 68: Listar hospitales que NO ofrecen la especialidad de "Ginecología"
 El operador $nin (not in) busca documentos donde el campo no contenga ninguno de los valores del array.
 ```javascript
 db.hospitales.find({ especialidades: { $nin: ["Ginecología"] } });
 ```
-
+---
 ### Consulta 69: Encontrar a todo el personal que no es ni médico ni enfermero(a)
 Usamos $nin sobre el código del rol para excluir múltiples roles a la vez.
 ```javascript
 db.personal.find({ "rol.codigo": { $nin: ["002", "003"] } });
 ```
-
+---
 ### Consulta 70: Contar el número total de medicamentos de tipo "Tableta"
 Un conteo simple sobre el catálogo de medicamentos.
 ```javascript
 db.medicamentos.countDocuments({ tipo: "Tableta" });
 ```
+---
 
 ### Consulta 71: Desglose de personal por rol en cada hospital
 Para cada hospital, esta consulta cuenta cuántos empleados hay de cada rol principal.
@@ -1187,7 +1196,7 @@ db.personal.aggregate([
   }
 ]);
 ```
-
+---
 ### Consulta 72: Encontrar tratamientos que nunca han sido utilizados
 Busca tratamientos que no aparecen en el historial de ningún paciente.
 ```javascript
@@ -1204,7 +1213,7 @@ db.tratamientos.aggregate([
   { $project: { _id: 0, nombre: 1, areaMedica: 1 } }
 ]);
 ```
-
+---
 ### Consulta 73: Ranking de médicos por número de diagnósticos únicos realizados
 Identifica a los médicos más "versátiles" por la variedad de diagnósticos que han emitido.
 ```javascript
@@ -1234,7 +1243,7 @@ db.visitasMedicas.aggregate([
   { $project: { _id: 0, nombreMedico: "$medico.nombre", numeroDiagnosticosUnicos: 1 } }
 ]);
 ```
-
+---
 ### Consulta 74: Contar cuántos tipos de medicamentos hay por forma de administración
 Clasifica el inventario de medicamentos por su tipo.
 ```javascript
@@ -1242,7 +1251,7 @@ db.medicamentos.aggregate([
   { $group: { _id: "$tipo", cantidad: { $sum: 1 } } }
 ]);
 ```
-
+---
 ### Consulta 75: Nuevos pacientes por mes (basado en la primera entrada de su historial)
 Analiza cuándo un paciente tuvo su primer registro para estimar la tasa de "nuevos ingresos".
 ```javascript
@@ -1266,7 +1275,7 @@ db.pacientes.aggregate([
   { $sort: { "_id.anio": 1, "_id.mes": 1 } }
 ]);
 ```
-
+---
 ### Consulta 76: Tratamiento más común para pacientes de "Sanitas"
 Identifica tendencias de tratamiento para una aseguradora específica.
 ```javascript
@@ -1288,7 +1297,7 @@ db.pacientes.aggregate([
   { $project: { _id: 0, tratamientoMasComun: "$tratamiento.nombre", frecuencia: 1 } }
 ]);
 ```
-
+---
 ### Consulta 77: Salario promedio por cada rol en el sistema
 Calcula la media salarial para cada tipo de rol (Director, Médico, Enfermero, etc.).
 ```javascript
@@ -1302,7 +1311,7 @@ db.personal.aggregate([
   { $project: { rol: "$_id", _id: 0, salarioPromedio: { $round: ["$salarioPromedio", 2] } } }
 ]);
 ```
-
+---
 ### Consulta 78: Listar pacientes y el costo total de los tratamientos que han recibido
 Calcula el gasto total en tratamientos por paciente, uniendo tres colecciones.
 ```javascript
@@ -1327,7 +1336,7 @@ db.pacientes.aggregate([
   { $sort: { costoTotal: -1 } }
 ]);
 ```
-
+---
 ### Consulta 79: Ranking de hospitales por número de pacientes únicos atendidos
 Determina qué hospital tiene más "tráfico" de pacientes distintos.
 ```javascript
@@ -1356,6 +1365,7 @@ db.visitasMedicas.aggregate([
   { $project: { _id: 0, hospital: "$hospital.nombre", numeroPacientesUnicos: 1 } }
 ]);
 ```
+---
 
 ### Consulta 80: Listar todos los médicos y la fecha de su visita más reciente
 Para cada médico, encuentra la fecha máxima de sus visitas registradas.
@@ -1387,48 +1397,50 @@ db.visitasMedicas.aggregate([
   }
 ]);
 ```
+---
+
 ### Consulta 81: Encontrar a un médico por su número de colegiatura
 Búsqueda directa y eficiente para un identificador único del personal médico.
 ```javascript
 db.personal.findOne({ numeroColegiatura: "76001" });
 ```
-
+---
 ### Consulta 82: Contar el número total de visitas médicas en toda la base de datos
 Utiliza estimatedDocumentCount() para un conteo muy rápido de todos los documentos de la colección.
 ```javascript
 db.visitasMedicas.estimatedDocumentCount();
 ```
-
+---
 ### Consulta 83: Encontrar personal con un salario inferior a 2,000,000
 Filtra empleados en el rango salarial más bajo usando el operador $lt (less than).
 ```javascript
 db.personal.find({ salario: { $lt: 2000000 } });
 ```
-
+---
 ### Consulta 84: Listar todas las visitas médicas que incluyen observaciones detalladas
 Busca documentos donde el campo 'observaciones' existe y no está vacío.
 ```javascript
 db.visitasMedicas.find({ observaciones: { $exists: true, $ne: "" } });
 ```
-
+---
 ### Consulta 85: Comprobar si algún medicamento está agotado (stock 0) en algún hospital
 Una consulta de auditoría de inventario para encontrar faltantes críticos.
 ```javascript
 db.medicamentos.find({ "inventario_por_hospital.disponibilidad": 0 });
 ```
-
+---
 ### Consulta 86: Encontrar pacientes con correos electrónicos que no sean de Gmail
 Usa $not con una expresión regular para excluir un patrón común.
 ```javascript
 db.pacientes.find({ correo: { $not: /@gmail.com$/ } });
 ```
-
+---
 ### Consulta 87: Listar a todo el personal en orden alfabético
 El método .sort() sobre un `find()` permite ordenar los resultados. 1 para ascendente, -1 para descendente.
 ```javascript
 db.personal.find().sort({ nombre: 1 });
 ```
-
+---
 ### Consulta 88: Encontrar tratamientos que no tengan una descripción registrada
 Útil para control de calidad de datos. Busca documentos donde el campo no existe o es un string vacío.
 ```javascript
@@ -1439,19 +1451,21 @@ db.tratamientos.find({
   ]
 });
 ```
+---
 
 ### Consulta 89: Contar cuántos medicamentos distintos son del fabricante "La Santé"
 Un conteo simple con un filtro por el campo 'fabricante'.
 ```javascript
 db.medicamentos.countDocuments({ fabricante: "La Santé" });
 ```
+---
 
 ### Consulta 90: Encontrar al último paciente registrado (por número de historia clínica)
 Ordena de forma descendente por el número de historia y limita al primer resultado.
 ```javascript
 db.pacientes.find().sort({ numeroHistoriaClinica: -1 }).limit(1);
 ```
-
+---
 ## Consultas de Agregación Avanzada (aggregate)
 
 ### Consulta 91: Calcular la nómina total (gasto en salarios) de toda la organización
@@ -1466,6 +1480,7 @@ db.personal.aggregate([
   }
 ]);
 ```
+---
 
 ### Consulta 92: Ranking de hospitales por cantidad de visitas totales
 Identifica qué hospitales son los más concurridos contando todas las visitas que han alojado.
@@ -1485,7 +1500,7 @@ db.visitasMedicas.aggregate([
   { $project: { _id: 0, hospital: "$hospital.nombre", totalVisitas: 1 } }
 ]);
 ```
-
+---
 ### Consulta 93: Identificar pacientes de "alto costo" (gasto total en tratamientos > 10,000,000)
 Filtra pacientes cuyo costo acumulado de tratamientos supera un umbral importante.
 ```javascript
@@ -1510,7 +1525,7 @@ db.pacientes.aggregate([
   { $match: { costoTotal: { $gt: 10000000 } } }
 ]);
 ```
-
+---
 ### Consulta 94: Encontrar visitas donde la especialidad del médico no coincide con las del hospital
 Una consulta de auditoría para encontrar posibles inconsistencias en la asignación de personal.
 ```javascript
@@ -1536,7 +1551,7 @@ db.visitasMedicas.aggregate([
   { $match: { coincide: false } }
 ]);
 ```
-
+---
 ### Consulta 95: Para cada medicamento, listar los hospitales que lo tienen en stock
 Crea un reporte de distribución de inventario.
 ```javascript
@@ -1558,7 +1573,7 @@ db.medicamentos.aggregate([
   }
 ]);
 ```
-
+---
 ### Consulta 96: Encontrar al paciente con el tratamiento individual más caro en su historial
 Identifica un caso extremo de costo en un solo procedimiento.
 ```javascript
@@ -1585,7 +1600,7 @@ db.pacientes.aggregate([
   }
 ]);
 ```
-
+---
 ### Consulta 97: Generar una "ficha de resumen" para un paciente específico
 Una consulta muy útil que consolida la información más relevante de un paciente en un solo lugar.
 ```javascript
@@ -1611,7 +1626,7 @@ db.pacientes.aggregate([
   }
 ]);
 ```
-
+---
 ### Consulta 98: Encontrar pacientes que han sido tratados por especialistas de campos diferentes
 Identifica pacientes con tratamientos multidisciplinarios.
 ```javascript
@@ -1644,7 +1659,7 @@ db.visitasMedicas.aggregate([
   { $project: { _id: 0, paciente: "$paciente.nombre", especialidades: "$especialidadesVisitadas" } }
 ]);
 ```
-
+---
 ### Consulta 99: Encontrar el hospital con el salario promedio más alto
 Analiza qué hospital tiene, en promedio, el personal mejor pagado.
 ```javascript
@@ -1676,7 +1691,7 @@ db.personal.aggregate([
   }
 ]);
 ```
-
+---
 ### Consulta 100: Reporte de visitas médicas programadas para el día de hoy
 Una consulta dinámica y práctica para el día a día de un hospital.
 ```javascript
@@ -1712,6 +1727,844 @@ db.visitasMedicas.aggregate([
   },
   { $sort: { hora: 1 } }
 ]);
+```
+---
+
+## Funciones JavaScript (UDF - Simuladas) 
+El objetivo es crear 20 funciones simuladas que se implementen como consultas reutilizables en MongoDB Compass o mediante funciones almacenadas en la base de datos (db.system.js.save()).
+
+---
+### 1. Función para calcular el inventario total de medicamentos por hospital
+---
+```javascript
+function calcularInventarioTotalPorHospital(hospitalId) {
+  return db.medicamentos.aggregate([
+    { $unwind: "$inventario_por_hospital" },
+    { $match: { "inventario_por_hospital.hospital_id": hospitalId } },
+    { 
+      $group: {
+        _id: null,
+        totalMedicamentos: { $sum: "$inventario_por_hospital.disponibilidad" },
+        cantidadTipos: { $sum: 1 }
+      }
+    },
+    { 
+      $project: {
+        _id: 0,
+        hospital: hospitalId,
+        totalMedicamentos: 1,
+        cantidadTipos: 1
+      }
+    }
+  ]).toArray();
+}
+```
+---
+### 2. Función para generar reporte de visitas médicas por diagnóstico
+---
+```javascript
+function generarReporteVisitasPorDiagnostico(fechaInicio, fechaFin) {
+  return db.visitasMedicas.aggregate([
+    { 
+      $match: { 
+        fecha: { 
+          $gte: new Date(fechaInicio), 
+          $lte: new Date(fechaFin) 
+        } 
+      } 
+    },
+    { 
+      $group: { 
+        _id: "$diagnostico", 
+        totalVisitas: { $sum: 1 },
+        primeros10Pacientes: { $push: { $slice: ["$paciente_id", 10] } }
+      } 
+    },
+    { $sort: { totalVisitas: -1 } },
+    { $limit: 20 }
+  ]).toArray();
+}
+```
+---
+### 3. Función para obtener estadísticas de tratamientos por hospital
+---
+```javascript
+function obtenerEstadisticasTratamientosPorHospital() {
+  return db.visitasMedicas.aggregate([
+    {
+      $lookup: {
+        from: "tratamientos",
+        localField: "tratamiento_id",
+        foreignField: "_id",
+        as: "tratamiento"
+      }
+    },
+    { $unwind: "$tratamiento" },
+    {
+      $group: {
+        _id: "$hospital_id",
+        totalTratamientos: { $sum: 1 },
+        costoPromedio: { $avg: "$tratamiento.costo" },
+        costoTotal: { $sum: "$tratamiento.costo" }
+      }
+    },
+    {
+      $lookup: {
+        from: "hospitales",
+        localField: "_id",
+        foreignField: "_id",
+        as: "hospital"
+      }
+    },
+    { $unwind: "$hospital" },
+    {
+      $project: {
+        _id: 0,
+        nombreHospital: "$hospital.nombre",
+        totalTratamientos: 1,
+        costoPromedio: { $round: ["$costoPromedio", 2] },
+        costoTotal: 1
+      }
+    }
+  ]).toArray();
+}
+```
+---
+### 4. Función para calcular la ocupación de médicos (visitas por médico)
+---
+```javascript
+function calcularOcupacionMedicos(fechaInicio, fechaFin) {
+  return db.visitasMedicas.aggregate([
+    { 
+      $match: { 
+        fecha: { 
+          $gte: new Date(fechaInicio), 
+          $lte: new Date(fechaFin) 
+        } 
+      } 
+    },
+    { 
+      $group: { 
+        _id: "$medico_id", 
+        totalVisitas: { $sum: 1 } 
+      } 
+    },
+    { $sort: { totalVisitas: -1 } },
+    {
+      $lookup: {
+        from: "personal",
+        localField: "_id",
+        foreignField: "_id",
+        as: "medico"
+      }
+    },
+    { $unwind: "$medico" },
+    {
+      $project: {
+        _id: 0,
+        nombreMedico: "$medico.nombre",
+        especialidad: "$medico.especialidad",
+        totalVisitas: 1
+      }
+    }
+  ]).toArray();
+}
+```
+---
+### 5. Función para encontrar pacientes con tratamientos costosos
+---
+```javascript
+function encontrarPacientesConTratamientosCostosos(umbralCosto) {
+  return db.pacientes.aggregate([
+    { $unwind: "$historial" },
+    {
+      $lookup: {
+        from: "tratamientos",
+        localField: "historial.tratamiento_id",
+        foreignField: "_id",
+        as: "tratamiento"
+      }
+    },
+    { $unwind: "$tratamiento" },
+    { $match: { "tratamiento.costo": { $gt: umbralCosto } } },
+    {
+      $group: {
+        _id: "$_id",
+        nombre: { $first: "$nombre" },
+        totalGastado: { $sum: "$tratamiento.costo" },
+        tratamientosCostosos: { $push: "$tratamiento.nombre" }
+      }
+    },
+    { $sort: { totalGastado: -1 } }
+  ]).toArray();
+}
+```
+---
+### 6. Función para generar reporte de medicamentos por debajo del stock mínimo
+---
+```javascript
+function reporteMedicamentosBajoStock(stockMinimo) {
+  return db.medicamentos.aggregate([
+    { $unwind: "$inventario_por_hospital" },
+    { $match: { "inventario_por_hospital.disponibilidad": { $lt: stockMinimo } } },
+    {
+      $lookup: {
+        from: "hospitales",
+        localField: "inventario_por_hospital.hospital_id",
+        foreignField: "_id",
+        as: "hospital"
+      }
+    },
+    { $unwind: "$hospital" },
+    {
+      $project: {
+        _id: 0,
+        medicamento: "$nombre",
+        hospital: "$hospital.nombre",
+        stockActual: "$inventario_por_hospital.disponibilidad",
+        stockMinimo: stockMinimo
+      }
+    }
+  ]).toArray();
+}
+```
+---
+### 7. Función para calcular el promedio de visitas por paciente
+---
+```javascript
+function calcularPromedioVisitasPorPaciente() {
+  return db.visitasMedicas.aggregate([
+    { 
+      $group: { 
+        _id: "$paciente_id", 
+        totalVisitas: { $sum: 1 } 
+      } 
+    },
+    { 
+      $group: { 
+        _id: null, 
+        promedioVisitas: { $avg: "$totalVisitas" },
+        pacientesConMasVisitas: { 
+          $push: { 
+            paciente_id: "$_id", 
+            visitas: "$totalVisitas" 
+          } 
+        }
+      } 
+    },
+    { 
+      $project: { 
+        _id: 0, 
+        promedioVisitas: { $round: ["$promedioVisitas", 2] },
+        topPacientes: { $slice: ["$pacientesConMasVisitas", 5] }
+      } 
+    }
+  ]).toArray();
+}
+```
+---
+### 8. Función para encontrar médicos con especialidades no ofrecidas por su hospital
+---
+```javascript
+function encontrarMedicosConEspecialidadesNoOfrecidas() {
+  return db.personal.aggregate([
+    { $match: { "rol.descripcion": "Médico Especialista" } },
+    {
+      $lookup: {
+        from: "hospitales",
+        localField: "hospital_id",
+        foreignField: "_id",
+        as: "hospital"
+      }
+    },
+    { $unwind: "$hospital" },
+    {
+      $project: {
+        _id: 0,
+        nombreMedico: "$nombre",
+        especialidad: "$especialidad",
+        nombreHospital: "$hospital.nombre",
+        especialidadesHospital: "$hospital.especialidades",
+        coincide: { $in: ["$especialidad", "$hospital.especialidades"] }
+      }
+    },
+    { $match: { coincide: false } }
+  ]).toArray();
+}
+
+```
+
+---
+### 9. Función para calcular la distribución de pacientes por EPS y ciudad
+---
+```javascript
+function calcularDistribucionPacientesPorEPSYCiudad() {
+  return db.pacientes.aggregate([
+    {
+      $lookup: {
+        from: "visitasMedicas",
+        localField: "_id",
+        foreignField: "paciente_id",
+        as: "visitas"
+      }
+    },
+    { $unwind: "$visitas" },
+    {
+      $lookup: {
+        from: "hospitales",
+        localField: "visitas.hospital_id",
+        foreignField: "_id",
+        as: "hospital"
+      }
+    },
+    { $unwind: "$hospital" },
+    {
+      $group: {
+        _id: {
+          eps: "$seguro",
+          ciudad: "$hospital.ciudad"
+        },
+        totalPacientes: { $sum: 1 }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        eps: "$_id.eps",
+        ciudad: "$_id.ciudad",
+        totalPacientes: 1
+      }
+    },
+    { $sort: { totalPacientes: -1 } }
+  ]).toArray();
+}
+```
+---
+### 10. Función para generar reporte de tratamientos más comunes por especialidad
+---
+```javascript
+function generarReporteTratamientosComunesPorEspecialidad() {
+  return db.visitasMedicas.aggregate([
+    {
+      $lookup: {
+        from: "personal",
+        localField: "medico_id",
+        foreignField: "_id",
+        as: "medico"
+      }
+    },
+    { $unwind: "$medico" },
+    {
+      $lookup: {
+        from: "tratamientos",
+        localField: "tratamiento_id",
+        foreignField: "_id",
+        as: "tratamiento"
+      }
+    },
+    { $unwind: "$tratamiento" },
+    {
+      $group: {
+        _id: {
+          especialidad: "$medico.especialidad",
+          tratamiento: "$tratamiento.nombre"
+        },
+        total: { $sum: 1 }
+      }
+    },
+    { $sort: { "_id.especialidad": 1, "total": -1 } },
+    {
+      $group: {
+        _id: "$_id.especialidad",
+        tratamientos: {
+          $push: {
+            tratamiento: "$_id.tratamiento",
+            total: "$total"
+          }
+        }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        especialidad: "$_id",
+        tratamientos: { $slice: ["$tratamientos", 5] }
+      }
+    }
+  ]).toArray();
+}
+```
+---
+### 11. Función para calcular la rotación de medicamentos por hospital
+---
+```javascript
+function calcularRotacionMedicamentosPorHospital() {
+  return db.medicamentos.aggregate([
+    { $unwind: "$inventario_por_hospital" },
+    {
+      $lookup: {
+        from: "hospitales",
+        localField: "inventario_por_hospital.hospital_id",
+        foreignField: "_id",
+        as: "hospital"
+      }
+    },
+    { $unwind: "$hospital" },
+    {
+      $group: {
+        _id: "$hospital.nombre",
+        medicamentos: { $sum: 1 },
+        stockTotal: { $sum: "$inventario_por_hospital.disponibilidad" },
+        stockPromedio: { $avg: "$inventario_por_hospital.disponibilidad" }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        hospital: "$_id",
+        medicamentos: 1,
+        stockTotal: 1,
+        stockPromedio: { $round: ["$stockPromedio", 2] }
+      }
+    },
+    { $sort: { stockTotal: -1 } }
+  ]).toArray();
+}
+```
+---
+### 12. Función para encontrar pacientes con múltiples diagnósticos
+---
+```javascript
+function encontrarPacientesConMultiplesDiagnosticos(limiteDiagnosticos) {
+  return db.pacientes.aggregate([
+    {
+      $project: {
+        nombre: 1,
+        seguro: 1,
+        totalDiagnosticos: { $size: "$historial" }
+      }
+    },
+    { $match: { totalDiagnosticos: { $gt: limiteDiagnosticos } } },
+    { $sort: { totalDiagnosticos: -1 } }
+  ]).toArray();
+}
+```
+---
+### 13. Función para calcular el tiempo promedio entre visitas por paciente
+---
+```javascript
+function calcularTiempoPromedioEntreVisitas() {
+  return db.visitasMedicas.aggregate([
+    { $sort: { paciente_id: 1, fecha: 1 } },
+    {
+      $group: {
+        _id: "$paciente_id",
+        fechas: { $push: "$fecha" }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        paciente_id: "$_id",
+        diferencias: {
+          $map: {
+            input: { $range: [1, { $size: "$fechas" }] },
+            as: "idx",
+            in: {
+              $divide: [
+                { $subtract: [
+                  { $arrayElemAt: ["$fechas", "$$idx"] },
+                  { $arrayElemAt: ["$fechas", { $subtract: ["$$idx", 1] }] }
+                ]},
+                1000 * 60 * 60 * 24 // Convertir a días
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      $lookup: {
+        from: "pacientes",
+        localField: "paciente_id",
+        foreignField: "_id",
+        as: "paciente"
+      }
+    },
+    { $unwind: "$paciente" },
+    {
+      $project: {
+        _id: 0,
+        nombrePaciente: "$paciente.nombre",
+        promedioDiasEntreVisitas: { $avg: "$diferencias" },
+        totalVisitas: { $size: "$diferencias" },
+        diferencias: 1
+      }
+    },
+    { $match: { totalVisitas: { $gt: 1 } } },
+    { $sort: { promedioDiasEntreVisitas: 1 } }
+  ]).toArray();
+}
+```
+---
+### 14. Función para generar reporte de eficiencia médica
+---
+```javascript
+function generarReporteEficienciaMedica() {
+  return db.visitasMedicas.aggregate([
+    {
+      $lookup: {
+        from: "personal",
+        localField: "medico_id",
+        foreignField: "_id",
+        as: "medico"
+      }
+    },
+    { $unwind: "$medico" },
+    {
+      $group: {
+        _id: "$medico_id",
+        nombreMedico: { $first: "$medico.nombre" },
+        especialidad: { $first: "$medico.especialidad" },
+        totalVisitas: { $sum: 1 },
+        diagnosticosUnicos: { $addToSet: "$diagnostico" }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        nombreMedico: 1,
+        especialidad: 1,
+        totalVisitas: 1,
+        diagnosticosUnicos: { $size: "$diagnosticosUnicos" },
+        ratioEficiencia: {
+          $divide: [
+            { $size: "$diagnosticosUnicos" },
+            "$totalVisitas"
+          ]
+        }
+      }
+    },
+    { $sort: { ratioEficiencia: -1 } }
+  ]).toArray();
+}
+```
+---
+### 15. Función para encontrar pacientes con tratamientos incompletos
+---
+```javascript
+function encontrarPacientesConTratamientosIncompletos() {
+  return db.pacientes.aggregate([
+    { $unwind: "$historial" },
+    {
+      $lookup: {
+        from: "tratamientos",
+        localField: "historial.tratamiento_id",
+        foreignField: "_id",
+        as: "tratamiento"
+      }
+    },
+    { $unwind: "$tratamiento" },
+    {
+      $match: {
+        "historial.resultados": { $nin: ["Completado", "Finalizado", "Exitoso"] }
+      }
+    },
+    {
+      $group: {
+        _id: "$_id",
+        nombre: { $first: "$nombre" },
+        tratamientosIncompletos: {
+          $push: {
+            tratamiento: "$tratamiento.nombre",
+            diagnostico: "$historial.diagnostico",
+            resultados: "$historial.resultados"
+          }
+        }
+      }
+    },
+    { $sort: { nombre: 1 } }
+  ]).toArray();
+}
+```
+### 16. Función para calcular la distribución de edades de pacientes
+```javascript
+function calcularDistribucionEdadesPacientes() {
+  // Suponiendo que tenemos un campo fechaNacimiento en los pacientes
+  return db.pacientes.aggregate([
+    {
+      $project: {
+        nombre: 1,
+        edad: {
+          $divide: [
+            { $subtract: [new Date(), "$fechaNacimiento"] },
+            1000 * 60 * 60 * 24 * 365.25 // Convertir a años
+          ]
+        }
+      }
+    },
+    {
+      $bucket: {
+        groupBy: "$edad",
+        boundaries: [0, 18, 30, 45, 60, 75, 90, 120],
+        default: "Desconocido",
+        output: {
+          count: { $sum: 1 },
+          pacientes: { $push: "$nombre" }
+        }
+      }
+    }
+  ]).toArray();
+}
+```
+---
+### 17. Función para predecir necesidades de medicamentos
+---
+```javascript
+function predecirNecesidadesMedicamentos(diasProyeccion) {
+  return db.visitasMedicas.aggregate([
+    {
+      $lookup: {
+        from: "tratamientos",
+        localField: "tratamiento_id",
+        foreignField: "_id",
+        as: "tratamiento"
+      }
+    },
+    { $unwind: "$tratamiento" },
+    {
+      $lookup: {
+        from: "medicamentos",
+        localField: "tratamiento.medicamentos",
+        foreignField: "_id",
+        as: "medicamentos"
+      }
+    },
+    { $unwind: "$medicamentos" },
+    {
+      $group: {
+        _id: {
+          medicamento: "$medicamentos.nombre",
+          hospital: "$hospital_id"
+        },
+        usoDiarioPromedio: { $avg: "$medicamentos.dosisDiaria" },
+        totalUsos: { $sum: 1 }
+      }
+    },
+    {
+      $lookup: {
+        from: "hospitales",
+        localField: "_id.hospital",
+        foreignField: "_id",
+        as: "hospital"
+      }
+    },
+    { $unwind: "$hospital" },
+    {
+      $lookup: {
+        from: "medicamentos",
+        localField: "_id.medicamento",
+        foreignField: "nombre",
+        as: "medicamentoInfo"
+      }
+    },
+    { $unwind: "$medicamentoInfo" },
+    { $unwind: "$medicamentoInfo.inventario_por_hospital" },
+    {
+      $match: {
+        "medicamentoInfo.inventario_por_hospital.hospital_id": "$_id.hospital"
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        medicamento: "$_id.medicamento",
+        hospital: "$hospital.nombre",
+        stockActual: "$medicamentoInfo.inventario_por_hospital.disponibilidad",
+        usoDiarioPromedio: 1,
+        diasRestantes: {
+          $divide: [
+            "$medicamentoInfo.inventario_por_hospital.disponibilidad",
+            "$usoDiarioPromedio"
+          ]
+        },
+        necesarioReponer: {
+          $lt: [
+            {
+              $divide: [
+                "$medicamentoInfo.inventario_por_hospital.disponibilidad",
+                "$usoDiarioPromedio"
+              ]
+            },
+            diasProyeccion
+          ]
+        }
+      }
+    },
+    { $sort: { diasRestantes: 1 } }
+  ]).toArray();
+}
+```
+---
+### 18. Función para generar reporte de ingresos por tratamiento
+---
+```javascript
+function generarReporteIngresosPorTratamiento(fechaInicio, fechaFin) {
+  return db.visitasMedicas.aggregate([
+    { 
+      $match: { 
+        fecha: { 
+          $gte: new Date(fechaInicio), 
+          $lte: new Date(fechaFin) 
+        } 
+      } 
+    },
+    {
+      $lookup: {
+        from: "tratamientos",
+        localField: "tratamiento_id",
+        foreignField: "_id",
+        as: "tratamiento"
+      }
+    },
+    { $unwind: "$tratamiento" },
+    {
+      $group: {
+        _id: "$tratamiento.nombre",
+        areaMedica: { $first: "$tratamiento.areaMedica" },
+        totalIngresos: { $sum: "$tratamiento.costo" },
+        totalVisitas: { $sum: 1 }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        tratamiento: "$_id",
+        areaMedica: 1,
+        totalIngresos: 1,
+        totalVisitas: 1,
+        ingresoPromedio: { $divide: ["$totalIngresos", "$totalVisitas"] }
+      }
+    },
+    { $sort: { totalIngresos: -1 } }
+  ]).toArray();
+}
+```
+
+---
+
+### 19. Función para encontrar correlaciones entre diagnósticos y tratamientos
+---
+```javascript
+function encontrarCorrelacionesDiagnosticosTratamientos() {
+  return db.pacientes.aggregate([
+    { $unwind: "$historial" },
+    {
+      $lookup: {
+        from: "tratamientos",
+        localField: "historial.tratamiento_id",
+        foreignField: "_id",
+        as: "tratamiento"
+      }
+    },
+    { $unwind: "$tratamiento" },
+    {
+      $group: {
+        _id: {
+          diagnostico: "$historial.diagnostico",
+          tratamiento: "$tratamiento.nombre"
+        },
+        frecuencia: { $sum: 1 }
+      }
+    },
+    { $sort: { frecuencia: -1 } },
+    {
+      $group: {
+        _id: "$_id.diagnostico",
+        tratamientosComunes: {
+          $push: {
+            tratamiento: "$_id.tratamiento",
+            frecuencia: "$frecuencia"
+          }
+        }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        diagnostico: "$_id",
+        tratamientosComunes: { $slice: ["$tratamientosComunes", 3] }
+      }
+    }
+  ]).toArray();
+}
+```
+---
+### 20. Función para generar reporte de desempeño hospitalario
+---
+
+```javascript
+function generarReporteDesempenoHospitalario() {
+  return db.hospitales.aggregate([
+    {
+      $lookup: {
+        from: "visitasMedicas",
+        localField: "_id",
+        foreignField: "hospital_id",
+        as: "visitas"
+      }
+    },
+    {
+      $lookup: {
+        from: "personal",
+        localField: "_id",
+        foreignField: "hospital_id",
+        as: "personal"
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        nombre: 1,
+        ciudad: 1,
+        totalVisitas: { $size: "$visitas" },
+        totalMedicos: {
+          $size: {
+            $filter: {
+              input: "$personal",
+              as: "empleado",
+              cond: { $eq: ["$$empleado.rol.descripcion", "Médico Especialista"] }
+            }
+          }
+        },
+        totalEnfermeros: {
+          $size: {
+            $filter: {
+              input: "$personal",
+              as: "empleado",
+              cond: { $eq: ["$$empleado.rol.descripcion", "Enfermero/a"] }
+            }
+          }
+        },
+        ratioVisitasPorMedico: {
+          $divide: [
+            { $size: "$visitas" },
+            {
+              $size: {
+                $filter: {
+                  input: "$personal",
+                  as: "empleado",
+                  cond: { $eq: ["$$empleado.rol.descripcion", "Médico Especialista"] }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    { $sort: { ratioVisitasPorMedico: -1 } }
+  ]).toArray();
+}
 ```
 
 # Desarrollado por
