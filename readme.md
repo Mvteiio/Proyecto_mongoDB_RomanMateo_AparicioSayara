@@ -96,10 +96,12 @@ Sigue estos pasos para poner en funcionamiento el proyecto en tu entorno local:
     ```sh
     # En la terminal de mongosh
     use miHospitalDB
-    load('ruta/a/tu/archivo/insercion_datos.js')
+    (copiar y pegar TODO el codigo del archivo dml(prueba).js)
     ```
     Esto creará y poblará todas las colecciones necesarias.
 
+    > _NOTA_: El archivo `dml(prueba.js)` tiene una cantidad de población muy reducida, esto ya que es solo una inserción para verificar que los datos se carguen correctamente en la db. Si deseas usar una población **mucho** más grande para realizar las pruebas, te recomendamos realizar el mismo procedimiento explicado anteriormente, pero copiando y pegando el codigo del archivo `dml(MayorEscala).js`
+ 
 ---
 ## Caso de Estudio
 El Sistema Hospitalario gestiona una red de hospitales que ofrecen servicios médicos especializados a pacientes individuales y colectivos. 
@@ -152,162 +154,92 @@ Los hospitales cuentan con áreas especializadas que ofrecen descuentos por trat
 
 ---
 
-## Gráfica
+## Gráficas
+
+- **Modelo Conceptual**
 
 ```mermaid
----
-config:
-  theme: redux
----
-flowchart TD
-%% Entidades
+graph TD
+    %% Definición de Estilos para los Nodos con Colores más Visibles
+    classDef entidadPrincipal fill:#2E86C1,color:#fff,stroke:#fff,stroke-width:2px;
+    classDef entidadTransaccional fill:#1ABC9C,color:#fff,stroke:#fff,stroke-width:2px;
+    classDef entidadCatalogo fill:#F39C12,color:#fff,stroke:#fff,stroke-width:2px;
 
-    HOSPITAL["Hospital"]
-    style HOSPITAL fill:#BBDEFB
-    PACIENTES["Pacientes"]
-    style PACIENTES fill:#BBDEFB
-    PERSONAL["Personal"]
-    style PERSONAL fill:#BBDEFB
-    MEDICAMENTOS["Medicamentos"]
-    style MEDICAMENTOS fill:#BBDEFB
-    TRATAMIENTOS["Tratamientos"]
-    style TRATAMIENTOS fill:#BBDEFB
-    VISITASMEDICAS["Visitas_Medicas"]
-    style VISITASMEDICAS     fill:#BBDEFB
+    %% Definición de Nodos con sus Atributos 
+    H[<strong>HOSPITAL</strong><br/>---<br/>_id<br/>nombre<br/>ciudad<br/>especialidades<br/>director_id]:::entidadPrincipal
+    PER[<strong>PERSONAL</strong><br/>---<br/>_id<br/>nombre<br/>especialidad<br/>salario<br/>rol<br/>hospital_id]:::entidadPrincipal
+    PAC[<strong>PACIENTE</strong><br/>---<br/>_id<br/>numeroHistoriaClinica<br/>nombre<br/>seguro<br/>historial]:::entidadPrincipal
+    
+    VM(<strong>VISITA MÉDICA</strong><br/>---<br/>_id<br/>fecha<br/>diagnostico<br/>paciente_id<br/>medico_id<br/>hospital_id):::entidadTransaccional
+    
+    TR((<strong>TRATAMIENTO</strong><br/>---<br/>_id<br/>nombre<br/>areaMedica<br/>costo)):::entidadCatalogo
+    MED((<strong>MEDICAMENTO</strong><br/>---<br/>_id<br/>nombre<br/>fabricante<br/>inventario)):::entidadCatalogo
 
-    %% Atributos
-    HId((Id_Hospital))
-    HNombre((Nombre))
-    HCiudad((Ciudad))
-    HEspecialidades((Areas_Especializadas))
-    HEspecializacion1((0))
-    HEspecializacion2((1))
-    HEspecializacion3((2))
-    HIdDirector((Id_Director))
+    %% Definición de Relaciones Conceptuales
+    H ---|Emplea| PER
+    PAC ---|Asiste a| VM
+    PER ---|Atiende en| VM
+    H ---|Ocurre en| VM
+    
+    PAC ---|Recibe ⟶| TR
+    TR ---|Puede requerir| MED
+```
+- **Modelo lógico**
 
-    PId((Id_Pacientes))
-    PNum((Numero_Historia_Clinica))
-    PNom((Nombre))
-    PCiudad((Ciudad))
-    PDir((Direccion))
-    PTel((Telefono))
-    PSeguro((Seguro))
-    PHistorial((Historial))
-    PHiFecha((Fecha))
-    PHiDiag((Diagnostico))
-    PHiTra((Id_tratamiento))
-    PiRes((Resultados))
+```mermaid
+erDiagram
+    hospitales {
+        ObjectId _id
+        string nombre
+        string ciudad
+        array especialidades
+        ObjectId director_id
+    }
+    personal {
+        ObjectId _id
+        string nombre
+        string especialidad
+        number salario
+        object rol
+        ObjectId hospital_id
+    }
+    pacientes {
+        ObjectId _id
+        number numeroHistoriaClinica
+        string nombre
+        string seguro
+        array historial
+    }
+    visitasMedicas {
+        ObjectId _id
+        date fecha
+        string diagnostico
+        ObjectId paciente_id
+        ObjectId medico_id
+        ObjectId hospital_id
+    }
+    tratamientos {
+        ObjectId _id
+        string nombre
+        string areaMedica
+        number costo
+    }
+    medicamentos {
+        ObjectId _id
+        string nombre
+        string fabricante
+        array inventario_por_hospital
+    }
 
-    PeId((Id_Personal))
-    PeNom((Nombre))
-    PeNum((Numero_Colegiatura))
-    PeEspecialidad((Especialidad))
-    PeTel((Telefono))
-    PeCorreo((Correo))
-    PeSal((Salario))
-    PeHos((Id_Hospital))
-    PeRol((Rol))
-    PeRC((Codigo))
-    PeRD((Descripcion))
+    hospitales ||--o{ personal : "emplea_a"
+    hospitales ||--|| personal : "es_dirigido_por"
+    hospitales ||--o{ visitasMedicas : "aloja"
+    hospitales }o--o{ medicamentos : "tiene_en_stock"
 
-    MId((Id_Medicamentos))
-    MNom((Nombre))
-    MFab((Fabricante))
-    MTipo((Tipo))
-    MInventario((Inventario))
-    MIn0((0))
-    MIn0ID((Id_Hospital))
-    MIn0Dis((Disponibilidad))
-    MIn1((1))
-    MIn1ID((Id_Hospital))
-    MIn1Dis((Disponibilidad))
+    personal ||--o{ visitasMedicas : "realiza"
 
-    TId((Id_Tratamientos))
-    TNom((Nombre))
-    TDes((Descripcion))
-    TArea((Area_Medica))
-    TCosto((Costo))
-
-    VMId((Id_VM))
-    VMFecha((Fecha))
-    VMP((Id_Paciente))
-    VMM((Id_Medico))
-    VMH((Id_Hospital))
-    VMDiag((Diagnostico))
-    VMObs((Observaciones))
-
-    %% Relaciones
-    HOSPITAL --> HId
-    HOSPITAL --> HNombre
-    HOSPITAL --> HCiudad
-    HOSPITAL --> HEspecialidades
-    HEspecialidades --> HEspecializacion1    
-    HEspecialidades --> HEspecializacion2
-    HEspecialidades --> HEspecializacion3
-    HOSPITAL --> HIdDirector
-
-    PACIENTES --> PId
-    PACIENTES --> PNum
-    PACIENTES --> PNom
-    PACIENTES --> PCiudad
-    PACIENTES --> PDir
-    PACIENTES --> PTel
-    PACIENTES --> PSeguro
-    PACIENTES --> PHistorial
-    PHistorial --> PHiFecha
-    PHistorial --> PHiDiag
-    PHistorial --> PHiTra
-    PHistorial --> PiRes
-
-    PERSONAL --> PeId
-    PERSONAL --> PeNom
-    PERSONAL --> PeNum
-    PERSONAL --> PeEspecialidad
-    PERSONAL --> PeTel
-    PERSONAL --> PeCorreo
-    PERSONAL --> PeSal
-    PERSONAL --> PeHos
-    PERSONAL --> PeRol
-    PeRol --> PeRC
-    PeRol --> PeRD
-
-    MEDICAMENTOS --> MId
-    MEDICAMENTOS --> MNom
-    MEDICAMENTOS --> MFab
-    MEDICAMENTOS --> MTipo
-    MEDICAMENTOS --> MInventario
-    MInventario --> MIn0
-    MIn0 --> MIn0ID
-    MIn0 --> MIn0Dis
-    MInventario --> MIn1
-    MIn1 --> MIn1ID
-    MIn1 --> MIn1Dis
-
-    TRATAMIENTOS --> TId
-    TRATAMIENTOS --> TNom
-    TRATAMIENTOS --> TDes
-    TRATAMIENTOS --> TArea
-    TRATAMIENTOS --> TCosto
-
-    VISITASMEDICAS --> VMId
-    VISITASMEDICAS --> VMFecha
-    VISITASMEDICAS --> VMP
-    VISITASMEDICAS --> VMM
-    VISITASMEDICAS --> VMH
-    VISITASMEDICAS --> VMDiag
-    VISITASMEDICAS --> VMObs
-
-    HOSPITAL --> PERSONAL
-    PACIENTES --> VISITASMEDICAS
-    PERSONAL --> VISITASMEDICAS
-
-
-
-
-
-
-
-
+    pacientes ||--o{ visitasMedicas : "asiste_a"
+    pacientes }o--|| tratamientos : "recibe_en_historial"
 ```
 
 
@@ -1893,10 +1825,14 @@ El objetivo es crear 20 funciones simuladas que se implementen como consultas re
 ### 1. Función para calcular el inventario total de medicamentos por hospital
 ---
 ```javascript
-function calcularInventarioTotalPorHospital(hospitalId) {
+function calcularInventarioTotalPorHospital(hospitalIdString) {
+  
+  const hospitalObjectId = new ObjectId(hospitalIdString);
+
   return db.medicamentos.aggregate([
     { $unwind: "$inventario_por_hospital" },
-    { $match: { "inventario_por_hospital.hospital_id": hospitalId } },
+    
+    { $match: { "inventario_por_hospital.hospital_id": hospitalObjectId } },
     { 
       $group: {
         _id: null,
@@ -1907,13 +1843,14 @@ function calcularInventarioTotalPorHospital(hospitalId) {
     { 
       $project: {
         _id: 0,
-        hospital: hospitalId,
+        hospital: hospitalObjectId,
         totalMedicamentos: 1,
         cantidadTipos: 1
       }
     }
   ]).toArray();
 }
+
 ```
 ---
 ### 2. Función para generar reporte de visitas médicas por diagnóstico
@@ -1933,11 +1870,19 @@ function generarReporteVisitasPorDiagnostico(fechaInicio, fechaFin) {
       $group: { 
         _id: "$diagnostico", 
         totalVisitas: { $sum: 1 },
-        primeros10Pacientes: { $push: { $slice: ["$paciente_id", 10] } }
+        pacientes: { $addToSet: "$paciente_id" }
       } 
     },
     { $sort: { totalVisitas: -1 } },
-    { $limit: 20 }
+    { $limit: 20 },
+    {
+      $project: {
+        _id: 0,
+        diagnostico: "$_id",
+        totalVisitas: 1,
+        primeros10Pacientes: { $slice: ["$pacientes", 10] }
+      }
+    }
   ]).toArray();
 }
 ```
@@ -1946,22 +1891,36 @@ function generarReporteVisitasPorDiagnostico(fechaInicio, fechaFin) {
 ---
 ```javascript
 function obtenerEstadisticasTratamientosPorHospital() {
-  return db.visitasMedicas.aggregate([
+  return db.pacientes.aggregate([
+    { $unwind: "$historial" },
+    
     {
       $lookup: {
         from: "tratamientos",
-        localField: "tratamiento_id",
+        localField: "historial.tratamiento_id",
         foreignField: "_id",
-        as: "tratamiento"
+        as: "infoTratamiento"
       }
     },
-    { $unwind: "$tratamiento" },
+    { $unwind: "$infoTratamiento" },
+
+
+    {
+      $lookup: {
+        from: "visitasMedicas",
+        localField: "_id", // El _id del paciente
+        foreignField: "paciente_id",
+        as: "visitas"
+      }
+    },
+    { $unwind: "$visitas" },
+
     {
       $group: {
-        _id: "$hospital_id",
+        _id: "$visitas.hospital_id",
         totalTratamientos: { $sum: 1 },
-        costoPromedio: { $avg: "$tratamiento.costo" },
-        costoTotal: { $sum: "$tratamiento.costo" }
+        costoPromedio: { $avg: "$infoTratamiento.costo" },
+        costoTotal: { $sum: "$infoTratamiento.costo" }
       }
     },
     {
@@ -1977,11 +1936,12 @@ function obtenerEstadisticasTratamientosPorHospital() {
       $project: {
         _id: 0,
         nombreHospital: "$hospital.nombre",
-        totalTratamientos: 1,
-        costoPromedio: { $round: ["$costoPromedio", 2] },
-        costoTotal: 1
+        totalTratamientosAplicados: "$totalTratamientos",
+        costoPromedioPorTratamiento: { $round: ["$costoPromedio", 2] },
+        costoTotalAcumulado: "$costoTotal"
       }
-    }
+    },
+    { $sort: { costoTotalAcumulado: -1 } }
   ]).toArray();
 }
 ```
@@ -2047,11 +2007,11 @@ function encontrarPacientesConTratamientosCostosos(umbralCosto) {
       $group: {
         _id: "$_id",
         nombre: { $first: "$nombre" },
-        totalGastado: { $sum: "$tratamiento.costo" },
+        totalGastadoEnTratamientosCaros: { $sum: "$tratamiento.costo" },
         tratamientosCostosos: { $push: "$tratamiento.nombre" }
       }
     },
-    { $sort: { totalGastado: -1 } }
+    { $sort: { totalGastadoEnTratamientosCaros: -1 } }
   ]).toArray();
 }
 ```
@@ -2096,11 +2056,13 @@ function calcularPromedioVisitasPorPaciente() {
         totalVisitas: { $sum: 1 } 
       } 
     },
+    { $sort: { totalVisitas: -1 } },
+
     { 
       $group: { 
         _id: null, 
         promedioVisitas: { $avg: "$totalVisitas" },
-        pacientesConMasVisitas: { 
+        pacientesOrdenados: { 
           $push: { 
             paciente_id: "$_id", 
             visitas: "$totalVisitas" 
@@ -2111,8 +2073,8 @@ function calcularPromedioVisitasPorPaciente() {
     { 
       $project: { 
         _id: 0, 
-        promedioVisitas: { $round: ["$promedioVisitas", 2] },
-        topPacientes: { $slice: ["$pacientesConMasVisitas", 5] }
+        promedioVisitasGeneral: { $round: ["$promedioVisitas", 2] },
+        top5Pacientes: { $slice: ["$pacientesOrdenados", 5] }
       } 
     }
   ]).toArray();
@@ -2164,6 +2126,7 @@ function calcularDistribucionPacientesPorEPSYCiudad() {
         as: "visitas"
       }
     },
+    { $match: { "visitas.0": { $exists: true } } }, 
     { $unwind: "$visitas" },
     {
       $lookup: {
@@ -2180,7 +2143,7 @@ function calcularDistribucionPacientesPorEPSYCiudad() {
           eps: "$seguro",
           ciudad: "$hospital.ciudad"
         },
-        totalPacientes: { $sum: 1 }
+        pacientesUnicos: { $addToSet: "$_id" }
       }
     },
     {
@@ -2188,10 +2151,10 @@ function calcularDistribucionPacientesPorEPSYCiudad() {
         _id: 0,
         eps: "$_id.eps",
         ciudad: "$_id.ciudad",
-        totalPacientes: 1
+        totalPacientes: { $size: "$pacientesUnicos" }
       }
     },
-    { $sort: { totalPacientes: -1 } }
+    { $sort: { ciudad: 1, totalPacientes: -1 } }
   ]).toArray();
 }
 ```
@@ -2200,25 +2163,39 @@ function calcularDistribucionPacientesPorEPSYCiudad() {
 ---
 ```javascript
 function generarReporteTratamientosComunesPorEspecialidad() {
-  return db.visitasMedicas.aggregate([
+  return db.pacientes.aggregate([
+    { $unwind: "$historial" },
+    
+    {
+      $lookup: {
+        from: "visitasMedicas",
+        localField: "_id",
+        foreignField: "paciente_id",
+        as: "visita"
+      }
+    },
+    { $unwind: "$visita" },
+    
     {
       $lookup: {
         from: "personal",
-        localField: "medico_id",
+        localField: "visita.medico_id",
         foreignField: "_id",
         as: "medico"
       }
     },
     { $unwind: "$medico" },
+
     {
-      $lookup: {
-        from: "tratamientos",
-        localField: "tratamiento_id",
-        foreignField: "_id",
-        as: "tratamiento"
-      }
+        $lookup: {
+            from: "tratamientos",
+            localField: "historial.tratamiento_id",
+            foreignField: "_id",
+            as: "tratamiento"
+        }
     },
     { $unwind: "$tratamiento" },
+
     {
       $group: {
         _id: {
@@ -2244,9 +2221,10 @@ function generarReporteTratamientosComunesPorEspecialidad() {
       $project: {
         _id: 0,
         especialidad: "$_id",
-        tratamientos: { $slice: ["$tratamientos", 5] }
+        top5Tratamientos: { $slice: ["$tratamientos", 5] } 
       }
-    }
+    },
+    { $sort: { especialidad: 1 } }
   ]).toArray();
 }
 ```
@@ -2318,10 +2296,15 @@ function calcularTiempoPromedioEntreVisitas() {
         fechas: { $push: "$fecha" }
       }
     },
+    { 
+      $match: { 
+        "fechas.1": { $exists: true } 
+      } 
+    },
     {
       $project: {
-        _id: 0,
         paciente_id: "$_id",
+        fechas: 1,
         diferencias: {
           $map: {
             input: { $range: [1, { $size: "$fechas" }] },
@@ -2332,13 +2315,14 @@ function calcularTiempoPromedioEntreVisitas() {
                   { $arrayElemAt: ["$fechas", "$$idx"] },
                   { $arrayElemAt: ["$fechas", { $subtract: ["$$idx", 1] }] }
                 ]},
-                1000 * 60 * 60 * 24 // Convertir a días
+                1000 * 60 * 60 * 24 
               ]
             }
           }
         }
       }
     },
+
     {
       $lookup: {
         from: "pacientes",
@@ -2352,13 +2336,12 @@ function calcularTiempoPromedioEntreVisitas() {
       $project: {
         _id: 0,
         nombrePaciente: "$paciente.nombre",
-        promedioDiasEntreVisitas: { $avg: "$diferencias" },
-        totalVisitas: { $size: "$diferencias" },
-        diferencias: 1
+        promedioDiasEntreVisitas: { $round: [{ $avg: "$diferencias" }, 2] },
+        totalVisitas: { $size: "$fechas" },
+        diferenciasEnDias: "$diferencias"
       }
     },
-    { $match: { totalVisitas: { $gt: 1 } } },
-    { $sort: { promedioDiasEntreVisitas: 1 } }
+    { $sort: { promedioDiasEntreVisitas: 1 } } 
   ]).toArray();
 }
 ```
@@ -2443,118 +2426,38 @@ function encontrarPacientesConTratamientosIncompletos() {
   ]).toArray();
 }
 ```
-### 16. Función para calcular la distribución de edades de pacientes
+### 16. Función para predecir necesidades de medicamentos
+Asumiremos que diariamente hay un consumo de 5 medicamentos para la función.
 ```javascript
-function calcularDistribucionEdadesPacientes() {
-  // Suponiendo que tenemos un campo fechaNacimiento en los pacientes
-  return db.pacientes.aggregate([
-    {
-      $project: {
-        nombre: 1,
-        edad: {
-          $divide: [
-            { $subtract: [new Date(), "$fechaNacimiento"] },
-            1000 * 60 * 60 * 24 * 365.25 // Convertir a años
-          ]
-        }
-      }
-    },
-    {
-      $bucket: {
-        groupBy: "$edad",
-        boundaries: [0, 18, 30, 45, 60, 75, 90, 120],
-        default: "Desconocido",
-        output: {
-          count: { $sum: 1 },
-          pacientes: { $push: "$nombre" }
-        }
-      }
-    }
-  ]).toArray();
-}
-```
----
-### 17. Función para predecir necesidades de medicamentos
----
-```javascript
-function predecirNecesidadesMedicamentos(diasProyeccion) {
-  return db.visitasMedicas.aggregate([
-    {
-      $lookup: {
-        from: "tratamientos",
-        localField: "tratamiento_id",
-        foreignField: "_id",
-        as: "tratamiento"
-      }
-    },
-    { $unwind: "$tratamiento" },
-    {
-      $lookup: {
-        from: "medicamentos",
-        localField: "tratamiento.medicamentos",
-        foreignField: "_id",
-        as: "medicamentos"
-      }
-    },
-    { $unwind: "$medicamentos" },
-    {
-      $group: {
-        _id: {
-          medicamento: "$medicamentos.nombre",
-          hospital: "$hospital_id"
-        },
-        usoDiarioPromedio: { $avg: "$medicamentos.dosisDiaria" },
-        totalUsos: { $sum: 1 }
-      }
-    },
+function generarReporteNivelDeStock(diasDeStockDeseados) {
+
+  const CONSUMO_DIARIO_ASUMIDO = 5;
+
+  return db.medicamentos.aggregate([
+    { $unwind: "$inventario_por_hospital" },
     {
       $lookup: {
         from: "hospitales",
-        localField: "_id.hospital",
+        localField: "inventario_por_hospital.hospital_id",
         foreignField: "_id",
         as: "hospital"
       }
     },
     { $unwind: "$hospital" },
     {
-      $lookup: {
-        from: "medicamentos",
-        localField: "_id.medicamento",
-        foreignField: "nombre",
-        as: "medicamentoInfo"
-      }
-    },
-    { $unwind: "$medicamentoInfo" },
-    { $unwind: "$medicamentoInfo.inventario_por_hospital" },
-    {
-      $match: {
-        "medicamentoInfo.inventario_por_hospital.hospital_id": "$_id.hospital"
-      }
-    },
-    {
       $project: {
         _id: 0,
-        medicamento: "$_id.medicamento",
+        medicamento: "$nombre",
         hospital: "$hospital.nombre",
-        stockActual: "$medicamentoInfo.inventario_por_hospital.disponibilidad",
-        usoDiarioPromedio: 1,
+        stockActual: "$inventario_por_hospital.disponibilidad",
         diasRestantes: {
-          $divide: [
-            "$medicamentoInfo.inventario_por_hospital.disponibilidad",
-            "$usoDiarioPromedio"
-          ]
-        },
-        necesarioReponer: {
-          $lt: [
-            {
-              $divide: [
-                "$medicamentoInfo.inventario_por_hospital.disponibilidad",
-                "$usoDiarioPromedio"
-              ]
-            },
-            diasProyeccion
-          ]
+          $round: [{ $divide: ["$inventario_por_hospital.disponibilidad", CONSUMO_DIARIO_ASUMIDO] }, 0]
         }
+      }
+    },
+    {
+      $match: {
+        diasRestantes: { $lt: diasDeStockDeseados }
       }
     },
     { $sort: { diasRestantes: 1 } }
@@ -2562,54 +2465,44 @@ function predecirNecesidadesMedicamentos(diasProyeccion) {
 }
 ```
 ---
-### 18. Función para generar reporte de ingresos por tratamiento
+### 17. Ingresos Totales Potenciales por Área Médica
 ---
 ```javascript
-function generarReporteIngresosPorTratamiento(fechaInicio, fechaFin) {
-  return db.visitasMedicas.aggregate([
-    { 
-      $match: { 
-        fecha: { 
-          $gte: new Date(fechaInicio), 
-          $lte: new Date(fechaFin) 
-        } 
-      } 
-    },
+function reporteIngresosPotencialesPorArea() {
+  return db.pacientes.aggregate([
+    { $unwind: "$historial" },
+
     {
       $lookup: {
         from: "tratamientos",
-        localField: "tratamiento_id",
+        localField: "historial.tratamiento_id",
         foreignField: "_id",
         as: "tratamiento"
       }
     },
     { $unwind: "$tratamiento" },
+
     {
       $group: {
-        _id: "$tratamiento.nombre",
-        areaMedica: { $first: "$tratamiento.areaMedica" },
-        totalIngresos: { $sum: "$tratamiento.costo" },
-        totalVisitas: { $sum: 1 }
+        _id: "$tratamiento.areaMedica",
+        ingresosTotales: { $sum: "$tratamiento.costo" },
+        numeroDeTratamientos: { $sum: 1 }
       }
     },
     {
       $project: {
         _id: 0,
-        tratamiento: "$_id",
-        areaMedica: 1,
-        totalIngresos: 1,
-        totalVisitas: 1,
-        ingresoPromedio: { $divide: ["$totalIngresos", "$totalVisitas"] }
+        areaMedica: "$_id",
+        ingresosTotales: 1,
+        numeroDeTratamientos: 1
       }
     },
-    { $sort: { totalIngresos: -1 } }
+    { $sort: { ingresosTotales: -1 } }
   ]).toArray();
 }
 ```
-
 ---
-
-### 19. Función para encontrar correlaciones entre diagnósticos y tratamientos
+### 18. Función para encontrar correlaciones entre diagnósticos y tratamientos
 ---
 ```javascript
 function encontrarCorrelacionesDiagnosticosTratamientos() {
@@ -2633,7 +2526,10 @@ function encontrarCorrelacionesDiagnosticosTratamientos() {
         frecuencia: { $sum: 1 }
       }
     },
-    { $sort: { frecuencia: -1 } },
+
+    { $sort: { "_id.diagnostico": 1, "frecuencia": -1 } },
+
+
     {
       $group: {
         _id: "$_id.diagnostico",
@@ -2649,16 +2545,17 @@ function encontrarCorrelacionesDiagnosticosTratamientos() {
       $project: {
         _id: 0,
         diagnostico: "$_id",
-        tratamientosComunes: { $slice: ["$tratamientosComunes", 3] }
+        top3Tratamientos: { $slice: ["$tratamientosComunes", 3] }
       }
     }
   ]).toArray();
 }
 ```
----
-### 20. Función para generar reporte de desempeño hospitalario
+
 ---
 
+### 19. Función para generar reporte de desempeño hospitalario
+---
 ```javascript
 function generarReporteDesempenoHospitalario() {
   return db.hospitales.aggregate([
@@ -2703,18 +2600,29 @@ function generarReporteDesempenoHospitalario() {
           }
         },
         ratioVisitasPorMedico: {
-          $divide: [
-            { $size: "$visitas" },
-            {
-              $size: {
-                $filter: {
-                  input: "$personal",
-                  as: "empleado",
-                  cond: { $eq: ["$$empleado.rol.descripcion", "Médico Especialista"] }
-                }
-              }
-            }
-          ]
+          $cond: {
+            if: { $gt: [
+              { $size: {
+                  $filter: {
+                    input: "$personal",
+                    cond: { $eq: ["$$this.rol.descripcion", "Médico Especialista"] }
+                  }
+              }}, 0]
+            },
+            then: {
+              $round: [ 
+                { $divide: [
+                    { $size: "$visitas" },
+                    { $size: {
+                        $filter: {
+                          input: "$personal",
+                          cond: { $eq: ["$$this.rol.descripcion", "Médico Especialista"] }
+                        }
+                    }}
+                ]}, 2]
+            },
+            else: 0 
+          }
         }
       }
     },
@@ -2722,7 +2630,207 @@ function generarReporteDesempenoHospitalario() {
   ]).toArray();
 }
 ```
+---
+### 20. Funcion para tener un Dashboard general
+---
 
-# Desarrollado por
+```javascript
+function obtenerDashboardGeneral() {
+  return db.visitasMedicas.aggregate([
+    {
+      $facet: {
+        "resumenGeneral": [
+          {
+            $group: {
+              _id: null,
+              totalVisitas: { $sum: 1 },
+              pacientesUnicos: { $addToSet: "$paciente_id" }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              totalVisitas: 1,
+              totalPacientesAtendidos: { $size: "$pacientesUnicos" }
+            }
+          }
+        ],
+
+        "topDiagnosticos": [
+          { $group: { _id: "$diagnostico", frecuencia: { $sum: 1 } } },
+          { $sort: { frecuencia: -1 } },
+          { $limit: 5 }
+        ],
+
+
+        "rendimientoHospitales": [
+          { $group: { _id: "$hospital_id", totalVisitas: { $sum: 1 } } },
+          { $sort: { totalVisitas: -1 } },
+          {
+            $lookup: {
+              from: "hospitales",
+              localField: "_id",
+              foreignField: "_id",
+              as: "hospital"
+            }
+          },
+          { $unwind: "$hospital" },
+          { $project: { _id: 0, hospital: "$hospital.nombre", totalVisitas: 1 } }
+        ]
+      }
+    },
+
+    {
+      $project: {
+        totalVisitas: { $arrayElemAt: ["$resumenGeneral.totalVisitas", 0] },
+        totalPacientesAtendidos: { $arrayElemAt: ["$resumenGeneral.totalPacientesAtendidos", 0] },
+        topDiagnosticos: "$topDiagnosticos",
+        rendimientoHospitales: "$rendimientoHospitales"
+      }
+    }
+
+  ]).toArray();
+}
+```
+
+## Creacion de roles de usuario
+Ahora, crearemos 5 tipos de roles distintos. Estos roles serán unos **Moldes** los cuales se le podrán asignar a los usuarios que se necesiten. Veremos primero cómo crear los roles, y al final cómo se asigna un rol a un usuario.
+
+### 1. Rol de **Director General**
+Acceso total sobre la base de datos del hospital.
+```javascript
+db.createRole({
+  role: "rolDirectorGeneral",
+  privileges: [
+    {
+      // En db: "" pondremos el nombre que hayamos asignado a la database. 
+      resource: { db: "miHospitalDB", collection: "" },
+      // anyAction es un privilegio que incluye todas las acciones posibles.
+      actions: [ "anyAction" ]
+    }
+  ],
+  roles: [] // No hereda de otros roles
+});
+```
+### 2. Rol de **Medico Especialista**
+Acceso de lectura y escritura a `pacientes` (para ver y actualizar historiales) y `visitasMedicas`. Acceso de solo lectura a `tratamientos` y `medicamentos` para consulta.
+```javascript
+db.createRole({
+  role: "rolMedicoEspecialista",
+  privileges: [
+    {
+      // Permisos de lectura y escritura para pacientes y visitas.
+      resource: { db: "miHospitalDB", collection: "pacientes" },
+      actions: [ "find", "update", "insert" ]
+    },
+    {
+      resource: { db: "miHospitalDB", collection: "visitasMedicas" },
+      actions: [ "find", "update", "insert" ]
+    },
+    {
+      // Permisos de solo lectura para consultar tratamientos y medicamentos.
+      resource: { db: "miHospitalDB", collection: "tratamientos" },
+      actions: [ "find" ]
+    },
+    {
+      resource: { db: "miHospitalDB", collection: "medicamentos" },
+      actions: [ "find" ]
+    }
+  ],
+  roles: []
+});
+```
+### 3. Rol de **Enfermero**
+Acceso de lectura y escritura a `pacientes` y `visitasMedicas`. 
+```javascript
+db.createRole({
+  role: "rolEnfermero",
+  privileges: [
+    {
+      // Permisos para ver pacientes y actualizar partes de su historial 
+      resource: { db: "miHospitalDB", collection: "pacientes" },
+      actions: [ "find", "update" ]
+    },
+    {
+      // Permisos para ver y registrar visitas.
+      resource: { db: "miHospitalDB", collection: "visitasMedicas" },
+      actions: [ "find", "insert" ]
+    }
+  ],
+  roles: []
+});
+```
+
+### 4. Rol de **Personal Administrativo**
+Gestión de personal (lectura/escritura en `personal`) y del inventario de medicamentos (lectura/escritura en `medicamentos`).
+```javascript
+db.createRole({
+  role: "rolPersonalAdministrativo",
+  privileges: [
+    {
+      // Control total sobre la colección de personal (contrataciones, salarios, etc.).
+      resource: { db: "miHospitalDB", collection: "personal" },
+      actions: [ "find", "update", "insert", "remove" ]
+    },
+    {
+      // Control total sobre el inventario de medicamentos.
+      resource: { db: "miHospitalDB", collection: "medicamentos" },
+      actions: [ "find", "update", "insert", "remove" ]
+    },
+    {
+        // Pueden ver información de los hospitales.
+        resource: { db: "miHospitalDB", collection: "hospitales" },
+        actions: [ "find" ]
+    }
+  ],
+  roles: []
+});
+```
+
+### 5. Rol de **Personal Mantenimiento**
+Acceso limitado a una colección hipotética de `tareasMantenimiento`. Esto evita que tengan acceso a datos sensibles de pacientes o personal.
+```javascript
+// Primero, es buena práctica crear la colección si no existe.
+db.createCollection("tareasMantenimiento");
+
+db.createRole({
+  role: "rolPersonalMantenimiento",
+  privileges: [
+    {
+      // Solo pueden interactuar con su colección de tareas.
+      resource: { db: "miHospitalDB", collection: "tareasMantenimiento" },
+      actions: [ "find", "update", "insert" ]
+    }
+  ],
+  roles: []
+});
+```
+
+> Nota: En lugar de poner *miHospitalDB* al nombre de la db, tendremos que colocar el nombre con el cual hayamos creado la base de datos.
+
+## ¿Y ahora cómo creo un usuario?
+Una vez que los roles están creados, puedes crear un usuario y asignarle uno de estos roles así:
+
+```javascript
+// Ejemplo para crear un médico
+db.createUser({
+  user: "cjaramillo",
+  pwd: passwordPrompt(), // Pide la contraseña de forma segura
+  roles: [
+    { role: "rolMedicoEspecialista", db: "miHospitalDB" }
+  ]
+});
+```
+
+# Contribuciones
+- **Sayara Aparicio 🌟**: Ayudó enormemente a la estructuración del **README**, fué la encargada de poner estética la documentación . También, creó las funciones que se encuentran en el archivo [dql_funciones](link). Realizó el modelo conceptual de la base de datos y siempre estuvo atenta a cualquier necesidad que se tuviera que suplir en la realización del proyecto.
+
+- **Mateo Roman 🌵**: Realizó la estructuración de la base de datos. Creó el archivo con las inserciones de prueba para poblar la base de datos. Realizó 100 consultas de ejemplo totalmente funcionales con el modelo de la base de datos. Creó los roles de usuario y el modelo lógico de la base de datos.
+
+### En conclusión...
+Ambas partes colaboraron enorme y activamente en la realización del proyecto. Hubo profesionalismo por ambos lados para poder crear este proyecto **totalmente** funcional. 
+
+---
+# 🎨 Desarrollado por
 - Mateo Román Camargo - [Linkedin](https://www.linkedin.com/in/mateo-roman-dev/) - [GitHub](https://github.com/Mvteiio) 
 - Sayara Aparicio - [LinkedIn](https://www.linkedin.com/in/sayara-aparicio-38827b373/) - [GitHub](https://github.com/SayaraAparicio/)
